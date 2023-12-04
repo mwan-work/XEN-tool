@@ -55,20 +55,30 @@
       tidyXML();
     });
 
-    function tidyXML() {
-      const input = document.getElementById('xmlInput');
-      const xmlString = input.value;
-      const formattedXML = formatXML(xmlString);
-      input.value = formattedXML;
-    }
+ function tidyXML() {
+  const input = document.getElementById('xmlInput');
+  let xmlString = input.value;
 
-    function formatXML(xmlString) {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlString, 'application/xml');
-      const rootElement = xmlDoc.documentElement;
-      const formatted = formatElement(rootElement, 0);
-      return formatted;
-    }
+  // Escape special characters in XML
+  xmlString = escapeSpecialCharacters(xmlString);
+
+  const formattedXML = formatXML(xmlString);
+  input.value = formattedXML;
+}
+
+function escapeSpecialCharacters(xmlString) {
+  // Replace '&' with '&amp;'
+  return xmlString.replace(/&/g, '&amp;');
+}
+
+function formatXML(xmlString) {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, 'application/xml');
+  const rootElement = xmlDoc.documentElement;
+  const formatted = formatElement(rootElement, 0);
+  return formatted;
+}
+
 
     function formatElement(element, level) {
       const tab = '  '; // Two spaces for each level of indentation
