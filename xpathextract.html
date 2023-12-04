@@ -108,8 +108,7 @@
 
       return formatted;
     }
-	
-	
+		
 		 function extractXPath() {
   const outputAreaContent = document.getElementById('outputArea').innerText;
   const xmlDoc = new DOMParser().parseFromString(outputAreaContent, 'text/xml');
@@ -157,7 +156,7 @@
 function highlightXML() {
   const xmlInput = document.getElementById('xmlInput');
   const outputArea = document.getElementById('outputArea');
-  
+
   const xmlCode = xmlInput.value;
 
   // Escape HTML entities to display correctly
@@ -170,6 +169,9 @@ function highlightXML() {
   let xpath = '';
   let highlightedXML = '<pre>'; // Start with <pre> tag to preserve formatting
 
+  // Define regular expressions to match opening and closing tags with attributes
+  const tagRegex = /&lt;(\/?\w+)([^&]*?)&gt;/g;
+
   // Split XML by line breaks to preserve them
   const lines = encodedXML.split('\n');
 
@@ -177,16 +179,13 @@ function highlightXML() {
     const leadingSpaces = line.match(/^\s*/)[0]; // Capture leading spaces
     const lineWithoutSpaces = line.trim(); // Trim leading/trailing spaces
 
-    const lineWithTags = lineWithoutSpaces.replace(/(&lt;\/?\w+.*?&gt;)/g, match => {
-      let color;
-      if (match.startsWith('&lt;/')) {
-        const openTag = match.substring(5, match.length - 4);
-        color = tagColors[openTag];
-        xpath = xpath.substring(0, xpath.lastIndexOf(`/${openTag}`));
-      } else {
-        const tag = match;
-        const tagName = tag.substring(tag.indexOf('&lt;') + 4, tag.indexOf('&gt;'));
+    let lineWithTags = lineWithoutSpaces.replace(tagRegex, match => {
+      const tagContent = match.replace(/&lt;|&gt;/g, ''); // Remove HTML encoding
+      const isClosingTag = tagContent.startsWith('/');
 
+      const tagName = tagContent.split(' ')[0].replace('/', ''); // Extract tag name
+
+      if (!isClosingTag) {
         if (!tagCounts[xpath]) {
           tagCounts[xpath] = {};
         }
@@ -197,6 +196,7 @@ function highlightXML() {
           tagCounts[xpath][tagName]++;
         }
 
+        let color;
         if (!tagColors[tagName]) {
           color = '#' + Math.floor(Math.random() * 16777215).toString(16);
           tagColors[tagName] = color;
@@ -206,13 +206,28 @@ function highlightXML() {
 
         const tagCount = tagCounts[xpath][tagName];
         xpath += `/${tagName}[${tagCount}]`;
-      }
 
-      return `<span style="color: ${color}">${match}</span>`;
+        return `<span data-tag="${tagName}" style="color: ${color}">${match}</span>`;
+      } else {
+        const openingTagName = tagName;
+        const closingTagName = openingTagName;
+
+        let color;
+        if (tagColors[openingTagName]) {
+          color = tagColors[openingTagName];
+        } else {
+          color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+          tagColors[openingTagName] = color;
+        }
+
+        xpath = xpath.substring(0, xpath.lastIndexOf(`/${closingTagName}`));
+
+        return `<span data-tag="${closingTagName}" style="color: ${color}">${match}</span>`;
+      }
     });
 
     highlightedXML += `${leadingSpaces}${lineWithTags}`;
-    
+
     if (index < lines.length - 1) {
       highlightedXML += '\n'; // Append newline character for line breaks, except for the last line
     }
@@ -223,6 +238,11 @@ function highlightXML() {
   // Replace the HTML of outputArea with the modified XML content
   outputArea.innerHTML = highlightedXML;
 }
+
+
+
+
+
 
     const highlightButton = document.getElementById('highlightButton');
     highlightButton.addEventListener('click', highlightXML);
