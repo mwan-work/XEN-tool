@@ -3,6 +3,13 @@
 <head>
   <title>XML Tidy Tool</title>
   <style>
+
+.container {
+  display: flex;
+
+}
+
+
     #xmlInput {
       width: 100%;
       height: 200px;
@@ -17,12 +24,15 @@
     font-weight: bold; /* Set the font weight to bold */
 	overflow: auto;
         width: 100%;
-      height: 300px;
+      height: 400px;
 	  text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.2);
   }
 
   /* Styles for the outputXPath */
   #outputXPath {
+  	overflow: auto;
+        width: 100%;
+      height: 400px;
     font-size: 18px; /* Set the font size */
     font-weight: bold; /* Set the font weight to bold */
     /* Add any other styles you need for the outputXPath */
@@ -38,10 +48,24 @@
   <div id="validationMessage"></div> <!-- Display validation message here -->
   <button id="singleButton">TIDY and EXTRACT</button>
   <button id="tidyButton" >Tidy XML</button>
-  <button onclick="extractXPath()" ed>Extract XPath</button>
+  <button onclick="extractXPath()">Extract XPath</button>
   <button id="highlightButton">Highlight XML</button>
-  <div id="outputArea"></div>
-  <div id="outputXPath"></div>
+
+<table style="width:100%">
+<tr><td style="width:50%">XML</td><td>XPATH</td style="width:50%"></tr>
+</table>
+  
+<div class="container">
+    
+    
+      <div id="outputArea"></div>
+    
+    
+      
+      <div id="outputXPath"></div>
+    
+  </div>
+
 
   <script>
     function performActions() {
@@ -126,49 +150,69 @@ function formatXML(xmlString) {
       return formatted;
     }
 		
-		 function extractXPath() {
-  const outputAreaContent = document.getElementById('outputArea').innerText;
-  const xmlDoc = new DOMParser().parseFromString(outputAreaContent, 'text/xml');
-      const nodes = xmlDoc.evaluate('//*', xmlDoc, null, XPathResult.ANY_TYPE, null);
-      
-      let xpathResult = '';
-      let node = nodes.iterateNext();
-      while (node) {
-        const xpath = getXPath(node);
-        xpathResult += `<div class="xpathElement">${xpath}</div>`;
-        node = nodes.iterateNext();
-      }
-      
-      document.getElementById('outputXPath').innerHTML = xpathResult.trim();
-    }
-	
-	
-	   function getXPath(node) {
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node;
-        const sameTagSiblings = Array.from(element.parentNode.childNodes).filter(e => e.tagName === element.tagName);
-        const index = sameTagSiblings.indexOf(element) + 1;
-        return getXPath(element.parentNode) + '/' + element.tagName.toLowerCase() + '[' + index + ']';
-      }
-      return '';
-    }
+function extractXPath() {
+  const outputArea = document.getElementById('outputArea');
+  const lines = outputArea.innerText.split('\n');
 
-    document.getElementById('outputXPath').addEventListener('click', function(event) {
-      if (event.target.classList.contains('xpathElement')) {
-        const xpath = event.target.textContent;
-        const xmlInput = document.getElementById('xmlInput').value;
-        const xmlDoc = new DOMParser().parseFromString(xmlInput, 'text/xml');
-        const element = xmlDoc.evaluate(xpath, xmlDoc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+  let xpathResult = '';
+  let openTagsStack = [];
 
-        if (element) {
-          const range = document.createRange();
-          range.selectNodeContents(element);
-          const selection = window.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(range);
-        }
-      }
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const lineNumber = i + 1;
+
+    const openTags = line.match(/<[^/][^>]*>/g) || [];
+    const closeTags = line.match(/<\/.*?>/g) || [];
+
+    openTags.forEach((openTag) => {
+      const tagName = openTag.match(/<([^>\s]+)[^>]*>/)[1].toLowerCase();
+      openTagsStack.push(tagName);
+
+      const xpathTags = openTagsStack.join('/');
+      xpathResult += `[LINE ${String(lineNumber).padStart(3, '0')}] /${xpathTags}\n`;
     });
+
+    closeTags.forEach(() => {
+      openTagsStack.pop();
+    });
+  }
+
+  // Remove the numbers at the end of the XPath
+  xpathResult = xpathResult.replace(/\[\d+\]/g, '');
+
+  document.getElementById('outputXPath').innerText = xpathResult.trim();
+}
+
+
+
+function getXPath(node) {
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    const element = node;
+    const sameTagSiblings = Array.from(element.parentNode.childNodes)
+      .filter(e => e.tagName === element.tagName && e.nodeType === Node.ELEMENT_NODE);
+
+    const index = sameTagSiblings.indexOf(element) + 1;
+
+    let xpath = '/' + element.tagName.toLowerCase() + '[' + index + ']';
+
+    let parentNode = element.parentNode;
+    while (parentNode !== null && parentNode.nodeType === Node.ELEMENT_NODE) {
+      const sameTagParentSiblings = Array.from(parentNode.parentNode.childNodes)
+        .filter(e => e.tagName === parentNode.tagName && e.nodeType === Node.ELEMENT_NODE);
+      
+      const parentIndex = sameTagParentSiblings.indexOf(parentNode) + 1;
+      xpath = '/' + parentNode.tagName.toLowerCase() + '[' + parentIndex + ']' + xpath;
+      
+      parentNode = parentNode.parentNode;
+    }
+
+    return xpath;
+  }
+  return '';
+}
+
+
+
 	
 function highlightXML() {
   const xmlInput = document.getElementById('xmlInput');
@@ -257,6 +301,7 @@ function highlightXML() {
   outputArea.innerHTML = highlightedXML;
 }
 
+	
 
 
 
