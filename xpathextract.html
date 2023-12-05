@@ -18,6 +18,7 @@
 	overflow: auto;
         width: 100%;
       height: 300px;
+	  text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.2);
   }
 
   /* Styles for the outputXPath */
@@ -45,8 +46,11 @@
   <script>
     function performActions() {
     tidyXML();
+	shiftContentUp();
 	highlightXML();
+	removeLineNumber();
     extractXPath();
+	addLineNumberToFirstLine()
   }
 
   const singleButton = document.getElementById('singleButton');
@@ -180,19 +184,16 @@ function highlightXML() {
   const tagCounts = {};
 
   let xpath = '';
+  let lineNumber = 1;
   let highlightedXML = '<pre>'; // Start with <pre> tag to preserve formatting
 
-  // Define regular expressions to match opening and closing tags with attributes
-  const tagRegex = /&lt;(\/?\w+)([^&]*?)&gt;/g;
-
-  // Split XML by line breaks to preserve them
   const lines = encodedXML.split('\n');
 
-  lines.forEach((line, index) => {
+  lines.forEach((line) => {
     const leadingSpaces = line.match(/^\s*/)[0]; // Capture leading spaces
     const lineWithoutSpaces = line.trim(); // Trim leading/trailing spaces
 
-    let lineWithTags = lineWithoutSpaces.replace(tagRegex, match => {
+    let lineWithTags = lineWithoutSpaces.replace(/&lt;(\/?\w+)([^&]*?)&gt;/g, match => {
       const tagContent = match.replace(/&lt;|&gt;/g, ''); // Remove HTML encoding
       const isClosingTag = tagContent.startsWith('/');
 
@@ -239,20 +240,22 @@ function highlightXML() {
       }
     });
 
-    highlightedXML += `${leadingSpaces}${lineWithTags}`;
+    const lineContent = `<span class="lineNumber">${String(lineNumber).padStart(3, '0')}</span>${leadingSpaces}${lineWithTags}`;
 
-    if (index < lines.length - 1) {
+    highlightedXML += lineContent;
+
+    if (lineNumber !== lines.length) {
       highlightedXML += '\n'; // Append newline character for line breaks, except for the last line
     }
+
+    lineNumber++;
   });
 
   highlightedXML += '</pre>'; // Close <pre> tag
 
-  // Replace the HTML of outputArea with the modified XML content
+  // Update the outputArea with the modified content
   outputArea.innerHTML = highlightedXML;
 }
-
-
 
 
 
@@ -288,7 +291,46 @@ function highlightXML() {
       
     }
 
-  
+  function removeLineNumber() {
+  const outputArea = document.getElementById('outputArea');
+  const firstLine = outputArea.querySelector('pre').firstChild;
+
+  if (firstLine.nodeType === Node.ELEMENT_NODE && firstLine.classList.contains('lineNumber')) {
+    outputArea.querySelector('pre').removeChild(firstLine);
+  }
+}
+
+function addLineNumberToFirstLine() {
+  const outputArea = document.getElementById('outputArea');
+  const preElement = outputArea.querySelector('pre');
+
+  // Check if <pre> element exists and there is no line number
+  if (preElement && !preElement.innerHTML.startsWith('<span class="lineNumber">')) {
+    const currentContent = preElement.innerHTML;
+
+    // Add line number to the beginning of the content
+    preElement.innerHTML = `<span class="lineNumber">001</span>${currentContent}`;
+  }
+}
+
+
+
+function shiftContentUp() {
+  const xmlInput = document.getElementById('xmlInput');
+  const currentValue = xmlInput.value;
+
+  // Split the input by lines and remove the first line
+  const lines = currentValue.split('\n');
+  if (lines.length > 1) {
+    lines.shift(); // Remove the first line
+    xmlInput.value = lines.join('\n');
+  } else {
+    xmlInput.value = ''; // Clear the content if there's only one line
+  }
+}
+
+
+
   </script>
 </body>
 </html>
