@@ -21,6 +21,7 @@
     #xmlInput {
       width: 50%;
       height: 200px;
+	  resize: vertical;
     }
     #tidyButton {
       margin-top: 10px;
@@ -54,13 +55,15 @@
 </head>
 <body>
 <div id="topbanner"><font size=12>XML TOOL</font></div>
-
+<br>
+<b>XML Input:</b><br>
   <textarea id="xmlInput" placeholder="Enter XML code here" oninput="validateXML()"></textarea>
   <div id="validationMessage"></div> <!-- Display validation message here -->
-  <button id="singleButton">TIDY and EXTRACT</button>
-  <button id="tidyButton" >Tidy XML</button>
-  <button onclick="extractXPath()">Extract XPath</button>
-  <button id="highlightButton">Highlight XML</button>
+  <button id="singleButton">EXTRACT XML AND XPATH</button>
+  <button id="tidyButton">TIDY</button>
+  <button onclick="handleReplace()">Replace Namespaces</button>
+
+
 
 <table style="width:100%">
 <tr><td style="width:50%"><b>XML Output:</b></td><td><b>XPATH Output:</b></td style="width:50%"></tr>
@@ -78,15 +81,22 @@
   </div>
 
 
-  <script>
-    function performActions() {
+   <script>
+function performActions() {
+  
+
+
+  handleReplace();
     tidyXML();
-	shiftContentUp();
-	highlightXML();
-	removeLineNumber();
+	handleRestore();
+    shiftContentUp();
+    highlightXML();
+    removeLineNumber();
     extractXPath();
-	addLineNumberToFirstLine()
-  }
+    addLineNumberToFirstLine();
+  
+}
+
 
   const singleButton = document.getElementById('singleButton');
   singleButton.addEventListener('click', performActions);
@@ -105,6 +115,61 @@
 
   const formattedXML = formatXML(xmlString);
   input.value = formattedXML;
+}
+
+
+function replaceNamespace(xmlInput) {
+  const replacedInput = xmlInput.replace(/(<\/?)(dc:|oai:dc)/g, function(match, p1, p2) {
+    const replacements = {
+      'dc:': 'dc-',
+      '</dc:': '</dc:',
+      'oai:dc': 'oai-dc',
+      '</oai:dc': '</oai-dc'
+    };
+
+    return p1 + replacements[p2];
+  });
+
+  return replacedInput;
+}
+
+
+function handleReplace() {
+  const inputElement = document.getElementById('xmlInput');
+  const xmlContent = inputElement.value;
+
+  const modifiedXML = replaceNamespace(xmlContent);
+  console.log(modifiedXML); // You can log it or use it as needed
+
+  // For demonstration purposes, update the textarea with the modified content
+  inputElement.value = modifiedXML;
+}
+
+function restoreNamespace(xmlInput) {
+  const restoredInput = xmlInput.replace(/(<\/?)(dc-|oai-dc)/g, function(match, p1, p2) {
+    const replacements = {
+      'dc-': 'dc:',
+      '</dc-': '</dc:',
+      'oai-dc': 'oai:dc',
+      '</oai-dc': '</oai-dc'
+    };
+
+    return p1 + replacements[p2];
+  });
+
+  return restoredInput;
+}
+
+
+function handleRestore() {
+  const inputElement = document.getElementById('xmlInput');
+  const xmlContent = inputElement.value;
+
+  const modifiedXML = restoreNamespace(xmlContent);
+  console.log(modifiedXML); // You can log it or use it as needed
+
+  // For demonstration purposes, update the textarea with the modified content
+  inputElement.value = modifiedXML;
 }
 
 function escapeSpecialCharacters(xmlString) {
@@ -316,8 +381,6 @@ function highlightXML() {
 
 
 
-    const highlightButton = document.getElementById('highlightButton');
-    highlightButton.addEventListener('click', highlightXML);
 	
 	  function validateXML() {
       const input = document.getElementById('xmlInput').value;
