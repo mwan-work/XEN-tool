@@ -8,6 +8,19 @@
   display: flex;
 
 }
+.line {
+    /* Your existing styles for each row */
+    /* For example: */
+  
+  
+    /* Any other styles for each row */
+}
+
+.line.highlighted {
+    background-color: darkgrey;
+    color: white;
+    /* Any other styles for the highlighted row */
+}
 
     #topbanner {
       width: 100%;
@@ -59,8 +72,8 @@
 <b>XML Input:</b><br>
   <textarea id="xmlInput" placeholder="Enter XML code here" oninput="validateXML()"></textarea>
   <div id="validationMessage">XML Input Check:</div> <!-- Display validation message here -->
-  <button id="singleButton">EXTRACT XML AND XPATH</button>
-  <button id="tidyButton">TIDY</button>
+  <button id="singleButton">Tidy XML and Extract XPATH</button>
+  <button onclick="tidyXML()">TIDY</button>
   <button onclick="handleReplace()">Replace Namespaces</button>
   <button onclick="generateExampleXML()">Insert Example XML</button>
 <button onclick="generateRandomXML()">Generate Random XML</button>
@@ -71,7 +84,7 @@
 
 
 <table style="width:100%">
-<tr><td style="width:50%"><b>XML Output:</b></td><td><b>XPATH Output:</b></td style="width:50%"></tr>
+<tr><td style="width:50%"><b>Tidy XML Output:</b></td><td><b>Xpath Output:</b></td style="width:50%"></tr>
 </table>
   
 <div class="container">
@@ -88,25 +101,33 @@
 
    <script>
    
-   // Add this code inside the <script> tag after other functions
+   
 function clearXMLInput() {
   document.getElementById('xmlInput').value = ''; // Clears the content of the XML input
 }
 
-// Add this code inside the <script> tag after other functions
 function generateRandomXML() {
-  const lineCount = 20; // Number of lines in the random XML
+  const maxLevels = 3; // Maximum levels of nesting
+  const lineCount = 30; // Number of lines in the random XML
   let randomXML = '<?xml version="1.0" encoding="UTF-8"?>\n<root>'; // Start with root element
   
   for (let i = 0; i < lineCount; i++) {
-    randomXML += `\n  <element_${i + 1}>Random Text ${Math.floor(Math.random() * 100)}</element_${i + 1}>`;
+    randomXML += `\n  <element_${i + 1}>`;
+    
+    // Generate a random number of child elements
+    const childCount = Math.floor(Math.random() * maxLevels) + 1;
+    
+    for (let j = 0; j < childCount; j++) {
+      randomXML += `\n    <child_${j + 1}>Random Text ${Math.floor(Math.random() * 100)}</child_${j + 1}>`;
+    }
+    
+    randomXML += `\n  </element_${i + 1}>`;
   }
   
   randomXML += '\n</root>'; // Close the root element
   
   document.getElementById('xmlInput').value = randomXML; // Set the random XML content into the XML input
 }
-
 
 function performActions() {
   
@@ -117,9 +138,10 @@ function performActions() {
 	handleRestore();
     shiftContentUp();
     highlightXML();
-    removeLineNumber();
+	
+    
     extractXPath();
-    addLineNumberToFirstLine();
+    
   
 }
 
@@ -128,9 +150,7 @@ function performActions() {
   singleButton.addEventListener('click', performActions);
   
   
-    document.getElementById('tidyButton').addEventListener('click', function() {
-      tidyXML();
-    });
+
 
  function tidyXML() {
   const input = document.getElementById('xmlInput');
@@ -178,7 +198,7 @@ function handleRestore() {
   const xmlContent = inputElement.value;
 
   const modifiedXML = restoreNamespace(xmlContent);
-  console.log(modifiedXML); // You can log it or use it as needed
+  console.log(modifiedXML); 
 
   // For demonstration purposes, update the textarea with the modified content
   inputElement.value = modifiedXML;
@@ -200,7 +220,7 @@ function formatXML(xmlString) {
 
 
     function formatElement(element, level) {
-      const tab = '  '; // Two spaces for each level of indentation
+      const tab = '   '; // Two spaces for each level of indentation
       const newline = '\n';
       let formatted = '';
 
@@ -299,9 +319,6 @@ function getXPath(node) {
   return '';
 }
 
-
-
-	
 function highlightXML() {
   const xmlInput = document.getElementById('xmlInput');
   const outputArea = document.getElementById('outputArea');
@@ -353,7 +370,7 @@ function highlightXML() {
         const tagCount = tagCounts[xpath][tagName];
         xpath += `/${tagName}[${tagCount}]`;
 
-        return `<span data-tag="${tagName}" style="color: ${color}">${match}</span>`;
+        return `<span class="tag" data-tag="${tagName}" style="color: ${color}">${match}</span>`;
       } else {
         const openingTagName = tagName;
         const closingTagName = openingTagName;
@@ -368,28 +385,47 @@ function highlightXML() {
 
         xpath = xpath.substring(0, xpath.lastIndexOf(`/${closingTagName}`));
 
-        return `<span data-tag="${closingTagName}" style="color: ${color}">${match}</span>`;
+        return `<span class="tag" data-tag="${closingTagName}" style="color: ${color}">${match}</span>`;
       }
     });
 
-    const lineContent = `<span class="lineNumber">${String(lineNumber).padStart(3, '0')}</span>${leadingSpaces}${lineWithTags}`;
+    const lineContent = `<div class="line"><span class="lineNumber">${String(lineNumber).padStart(3, '0')}</span>${leadingSpaces}${lineWithTags}</div>`; // Adjusted lineContent with line numbers at the beginning
 
     highlightedXML += lineContent;
-
-    if (lineNumber !== lines.length) {
-      highlightedXML += '\n'; // Append newline character for line breaks, except for the last line
-    }
 
     lineNumber++;
   });
 
   highlightedXML += '</pre>'; // Close <pre> tag
 
-  // Update the outputArea with the modified content
-  outputArea.innerHTML = highlightedXML;
+  outputArea.innerHTML = highlightedXML; // Update the outputArea with the modified content
+
+  // Add event listeners for row highlighting
+const clickableElements = outputArea.querySelectorAll('.line');
+clickableElements.forEach(element => {
+  element.addEventListener('click', function(event) {
+    const row = event.target.closest('.line');
+    
+    // Check if the clicked row is already highlighted
+    const isHighlighted = row.classList.contains('highlighted');
+    
+    // Remove highlight from all rows
+    const rows = outputArea.querySelectorAll('.line.highlighted');
+    rows.forEach(row => {
+      row.classList.remove('highlighted');
+    });
+
+    // Toggle highlight on the clicked row
+    if (!isHighlighted) {
+      row.classList.add('highlighted');
+    }
+  });
+});
+
+
 }
 
-	
+
 
 
 
@@ -426,18 +462,7 @@ function highlightXML() {
   }
 }
 
-function addLineNumberToFirstLine() {
-  const outputArea = document.getElementById('outputArea');
-  const preElement = outputArea.querySelector('pre');
 
-  // Check if <pre> element exists and there is no line number
-  if (preElement && !preElement.innerHTML.startsWith('<span class="lineNumber">')) {
-    const currentContent = preElement.innerHTML;
-
-    // Add line number to the beginning of the content
-    preElement.innerHTML = `<span class="lineNumber">001</span>${currentContent}`;
-  }
-}
 
 
 
