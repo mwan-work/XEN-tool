@@ -58,7 +58,7 @@
 <br>
 <b>XML Input:</b><br>
   <textarea id="xmlInput" placeholder="Enter XML code here" oninput="validateXML()"></textarea>
-  <div id="validationMessage"></div> <!-- Display validation message here -->
+  <div id="validationMessage">XML Input Check:</div> <!-- Display validation message here -->
   <button id="singleButton">EXTRACT XML AND XPATH</button>
   <button id="tidyButton">TIDY</button>
   <button onclick="handleReplace()">Replace Namespaces</button>
@@ -119,19 +119,12 @@ function performActions() {
 
 
 function replaceNamespace(xmlInput) {
-  const replacedInput = xmlInput.replace(/(<\/?)(dc:|oai:dc)/g, function(match, p1, p2) {
-    const replacements = {
-      'dc:': 'dc-',
-      '</dc:': '</dc:',
-      'oai:dc': 'oai-dc',
-      '</oai:dc': '</oai-dc'
-    };
-
-    return p1 + replacements[p2];
-  });
+  const replacedInput = xmlInput.replace(/<([^>]+):/g, '<$1UNIQ-')
+    .replace(/<\/([^>]+):/g, '</$1UNIQ-');
 
   return replacedInput;
 }
+
 
 
 function handleReplace() {
@@ -146,19 +139,12 @@ function handleReplace() {
 }
 
 function restoreNamespace(xmlInput) {
-  const restoredInput = xmlInput.replace(/(<\/?)(dc-|oai-dc)/g, function(match, p1, p2) {
-    const replacements = {
-      'dc-': 'dc:',
-      '</dc-': '</dc:',
-      'oai-dc': 'oai:dc',
-      '</oai-dc': '</oai-dc'
-    };
-
-    return p1 + replacements[p2];
-  });
+  const restoredInput = xmlInput.replace(/<([^>]+)UNIQ-/g, '<$1:')
+    .replace(/<\/([^>]+)UNIQ-/g, '</$1');
 
   return restoredInput;
 }
+
 
 
 function handleRestore() {
@@ -390,23 +376,18 @@ function highlightXML() {
       const validationMessage = document.getElementById('validationMessage');
       const buttons = document.querySelectorAll('button');
 
-      // Check if XML has a root element
-      if (xmlDoc.documentElement === null) {
-        validationMessage.innerText = 'XML is missing a root element';
-        
-        return;
-      }
+    
 
       // Check for missing end tags
       const parserErrors = xmlDoc.getElementsByTagName('parsererror');
       if (parserErrors.length > 0) {
-        validationMessage.innerText = 'XML has missing or incorrect end tags';
+        validationMessage.innerText = 'XML Input Check: Missing or incorrect end tags. Errors may occur on output.';
         
         return;
       }
 
       // If all checks pass, display success message and enable buttons
-      validationMessage.innerText = 'XML is valid';
+      validationMessage.innerText = 'XML Input Check: Good';
       
     }
 
