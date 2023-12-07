@@ -277,7 +277,7 @@ function extractXPath() {
       openTagsStack.push(tagName);
 
       const xpathTags = openTagsStack.join('/');
-      xpathResult += `[LINE ${String(lineNumber).padStart(3, '0')}] /${xpathTags}\n`;
+      xpathResult += `<span class="line">[LINE ${String(lineNumber).padStart(3, '0')}]</span> /${xpathTags}<br>`;
     });
 
     closeTags.forEach(() => {
@@ -288,7 +288,32 @@ function extractXPath() {
   // Remove the numbers at the end of the XPath
   xpathResult = xpathResult.replace(/\[\d+\]/g, '');
 
-  document.getElementById('outputXPath').innerText = xpathResult.trim();
+  document.getElementById('outputXPath').innerHTML = xpathResult.trim();
+  
+   // Add event listeners for row highlighting
+const outputXPath = document.getElementById('outputXPath');
+const clickableElements = outputXPath.querySelectorAll('.line');
+clickableElements.forEach(element => {
+  element.addEventListener('click', function(event) {
+    const row = event.target.closest('.line');
+    
+    // Check if the clicked row is already highlighted
+    const isHighlighted = row.classList.contains('highlighted');
+    
+    // Remove highlight from all rows
+    const rows = outputXPath.querySelectorAll('.line.highlighted');
+    rows.forEach(row => {
+      row.classList.remove('highlighted');
+    });
+
+    // Toggle highlight on the clicked row
+    if (!isHighlighted) {
+      row.classList.add('highlighted');
+    }
+  });
+});
+
+  
 }
 
 
@@ -419,8 +444,11 @@ clickableElements.forEach(element => {
     if (!isHighlighted) {
       row.classList.add('highlighted');
     }
+	
   });
 });
+
+// new code
 
 
 }
