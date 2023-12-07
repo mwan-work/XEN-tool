@@ -104,6 +104,11 @@
    
 function clearXMLInput() {
   document.getElementById('xmlInput').value = ''; // Clears the content of the XML input
+  const outputArea = document.getElementById('outputArea');
+  outputArea.innerHTML = ''; // Clear the contents of outputArea
+
+  const outputXPath = document.getElementById('outputXPath');
+  outputXPath.innerHTML = ''; // Clear the contents of outputXPath
 }
 
 function generateRandomXML() {
@@ -278,7 +283,7 @@ function extractXPath() {
       openTagsStack.push(tagName);
 
       const xpathTags = openTagsStack.join('/');
-      xpathResult += `<div class="line">[LINE ${String(lineNumber).padStart(3, '0')}] /${xpathTags}</div>`;
+      xpathResult += `<div class="line">[LINE <span class="lineNumber">${String(lineNumber).padStart(3, '0')}</span>] /${xpathTags}</div>`;
     });
 
     closeTags.forEach(() => {
@@ -314,6 +319,33 @@ clickableElements.forEach(element => {
   });
 });
 
+// Add event listener for row highlighting in outputXPath
+const clickableElementsXPath = outputXPath.querySelectorAll('.line');
+clickableElementsXPath.forEach(element => {
+  element.addEventListener('click', function(event) {
+    const row = event.target.closest('.line');
+    const clickedLineNumber = row.querySelector('.lineNumber').textContent.trim();
+
+    // Find the corresponding line in outputArea
+    const outputArea = document.getElementById('outputArea');
+    const outputAreaLines = outputArea.querySelectorAll('.line');
+
+    outputAreaLines.forEach(areaLine => {
+      const areaLineNumber = areaLine.querySelector('.lineNumber').textContent.trim();
+
+      if (areaLineNumber === clickedLineNumber) {
+        // Remove highlight from all rows in outputArea
+        const rowsArea = outputArea.querySelectorAll('.line.highlighted');
+        rowsArea.forEach(row => {
+          row.classList.remove('highlighted');
+        });
+
+        // Highlight the corresponding row in outputArea
+        areaLine.classList.add('highlighted');
+      }
+    });
+  });
+});
   
 }
 
@@ -449,7 +481,34 @@ clickableElements.forEach(element => {
   });
 });
 
-// new code
+// Add event listener for row highlighting in outputArea
+const clickableElementsOutputArea = outputArea.querySelectorAll('.line');
+clickableElementsOutputArea.forEach(element => {
+  element.addEventListener('click', function(event) {
+    const row = event.target.closest('.line');
+    const clickedLineNumber = row.querySelector('.lineNumber').textContent.trim();
+
+    // Find the corresponding line in outputXPath
+    const xpathOutputArea = document.getElementById('outputXPath');
+    const xpathLines = xpathOutputArea.querySelectorAll('.line');
+
+    xpathLines.forEach(xpathLine => {
+      const xpathLineNumber = xpathLine.querySelector('.lineNumber').textContent.trim();
+
+      if (xpathLineNumber === clickedLineNumber) {
+        // Remove highlight from all rows in outputXPath
+        const rowsXPath = xpathOutputArea.querySelectorAll('.line.highlighted');
+        rowsXPath.forEach(row => {
+          row.classList.remove('highlighted');
+        });
+
+        // Highlight the corresponding row in outputXPath
+        xpathLine.classList.add('highlighted');
+      }
+    });
+  });
+});
+
 
 
 }
