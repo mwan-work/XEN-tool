@@ -59,8 +59,8 @@ align-items: flex-start;
  #selectXPath {
   	overflow: auto;
         width: 100%;
-      height: 50px;
-    font-size: 20px; /* Set the font size */
+      height: 100px;
+    font-size: 18px; /* Set the font size */
     font-weight: bold; /* Set the font weight to bold */
 	border: 1px solid black; 
     /* Add any other styles you need for the outputXPath */
@@ -70,7 +70,7 @@ align-items: flex-start;
   #outputXPath {
   	overflow: auto;
         width: 100%;
-      height: 350px;
+      height: 300px;
     font-size: 18px; /* Set the font size */
     font-weight: bold; /* Set the font weight to bold */
 	border: 1px solid black; 
@@ -149,7 +149,7 @@ function setTextContent(text) {
             const formattedAttributes = attributeNames.map(attr => `${fullXPath}/@${attr.slice(0, -1)}`).join('<br>');
             selectXPathDiv.innerHTML += '<br>' + formattedAttributes.replace(/\s/g, '<br>');
           } else {
-            selectXPathDiv.innerHTML += '<br>No attributes found.';
+            selectXPathDiv.innerHTML += '<br>';
           }
         } else {
           selectXPathDiv.innerHTML += '<br>No tag span found.';
@@ -184,13 +184,33 @@ function generateRandomXML() {
   let randomXML = `<?xml version="1.0" encoding="UTF-8"?><root>`; // Start with root element
 
   for (let i = 0; i < lineCount; i++) {
-    randomXML += `<element_${i + 1}>`;
+    randomXML += `<element_${i + 1}`;
+
+    // Generate random attributes for the parent element
+    const parentAttributesCount = Math.floor(Math.random() * 3) + 1; // Random number of attributes for the parent element (between 1 and 3)
+    for (let a = 0; a < parentAttributesCount; a++) {
+      const attributeName = `attr_${a + 1}`;
+      const attributeValue = `Value_${Math.floor(Math.random() * 10)}`; // Random attribute value
+      randomXML += ` ${attributeName}="${attributeValue}"`;
+    }
+
+    randomXML += '>';
 
     // Generate a random number of child elements based on the updated maxLevels
     const childCount = Math.floor(Math.random() * maxLevels) + 1;
 
     for (let j = 0; j < childCount; j++) {
-      randomXML += `<child_${j + 1}>Random Text ${Math.floor(Math.random() * 100)}</child_${j + 1}>`;
+      randomXML += `<child_${j + 1}`;
+
+      // Generate random attributes for the child element
+      const childAttributesCount = Math.floor(Math.random() * 2); // Random number of attributes for the child element (up to 2)
+      for (let b = 0; b < childAttributesCount; b++) {
+        const attributeName = `attr_${b + 1}`;
+        const attributeValue = `Value_${Math.floor(Math.random() * 10)}`; // Random attribute value
+        randomXML += ` ${attributeName}="${attributeValue}"`;
+      }
+
+      randomXML += `>Random Text ${Math.floor(Math.random() * 100)}</child_${j + 1}>`;
     }
 
     randomXML += `</element_${i + 1}>`;
@@ -201,6 +221,7 @@ function generateRandomXML() {
   document.getElementById('xmlInput').value = randomXML; // Set the random XML content into the XML input
   validateXML();
 }
+
 
 
 
@@ -422,6 +443,7 @@ clickableElementsXPath.forEach(element => {
 
           // Highlight the corresponding row in outputArea
           areaLine.classList.add('highlighted');
+		  extractContent()
 		  areaLine.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       });
