@@ -125,25 +125,44 @@ function setTextContent(text) {
 
  
  function extractContent() {
-  // Find the elements
   const outputXPathDiv = document.getElementById('outputXPath');
   const selectXPathDiv = document.getElementById('selectXPath');
+  const outputAreaDiv = document.getElementById('outputArea');
 
-  // Check if the elements exist
-  if (outputXPathDiv && selectXPathDiv) {
-    // Find the span with class 'fullxpath' within the 'outputXPath' div
+  if (outputXPathDiv && selectXPathDiv && outputAreaDiv) {
     const fullXPathSpan = outputXPathDiv.querySelector('.line.highlighted .fullxpath');
 
-    // Check if the span exists
     if (fullXPathSpan) {
-      // Extract content from the span and display it in the 'selectXPath' div
-      selectXPathDiv.textContent = fullXPathSpan.textContent;
+      const fullXPath = fullXPathSpan.textContent.trim();
+      selectXPathDiv.innerHTML = fullXPath;
+
+      const highlightedLineDiv = outputAreaDiv.querySelector('.line.highlighted');
+
+      if (highlightedLineDiv && highlightedLineDiv.innerHTML.trim() !== '') {
+        const tagSpan = highlightedLineDiv.querySelector('.tag');
+
+        if (tagSpan) {
+          const tagContent = tagSpan.textContent;
+          const attributeNames = tagContent.match(/\b([^=\s]+)=/g);
+
+          if (attributeNames && attributeNames.length > 0) {
+            const formattedAttributes = attributeNames.map(attr => `${fullXPath}/@${attr.slice(0, -1)}`).join('<br>');
+            selectXPathDiv.innerHTML += '<br>' + formattedAttributes.replace(/\s/g, '<br>');
+          } else {
+            selectXPathDiv.innerHTML += '<br>No attributes found.';
+          }
+        } else {
+          selectXPathDiv.innerHTML += '<br>No tag span found.';
+        }
+      } else {
+        selectXPathDiv.innerHTML += '<br>No content found.';
+      }
     } else {
-      // If span doesn't exist, display blank in the 'selectXPath' div
-      selectXPathDiv.textContent = '';
+      selectXPathDiv.innerHTML = '';
     }
   }
 }
+
 
 
    
