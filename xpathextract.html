@@ -90,18 +90,16 @@
   
 <div class="container">
     
-    
       <div id="outputArea"></div>
+	  <div id="outputXPath"></div>
     
-    
-      
-      <div id="outputXPath"></div>
-    
-  </div>
+</div>
 
 
-   <script>
+<script>
    
+ 
+
    
 function clearXMLInput() {
   document.getElementById('xmlInput').value = ''; // Clears the content of the XML input
@@ -327,29 +325,41 @@ clickableElementsXPath.forEach(element => {
   element.addEventListener('click', function(event) {
     const row = event.target.closest('.line');
     const clickedLineNumber = row.querySelector('.lineNumber').textContent.trim();
+    const isHighlighted = row.classList.contains('highlighted');
 
     // Find the corresponding line in outputArea
     const outputArea = document.getElementById('outputArea');
     const outputAreaLines = outputArea.querySelectorAll('.line');
 
-    outputAreaLines.forEach(areaLine => {
-      const areaLineNumber = areaLine.querySelector('.lineNumber').textContent.trim();
+    if (!isHighlighted) {
+      // Remove highlight from all rows in outputArea
+      const rowsArea = outputArea.querySelectorAll('.line.highlighted');
+      rowsArea.forEach(row => {
+        row.classList.remove('highlighted');
+      });
+    } else {
+      outputAreaLines.forEach(areaLine => {
+        const areaLineNumber = areaLine.querySelector('.lineNumber').textContent.trim();
 
-      if (areaLineNumber === clickedLineNumber) {
-        // Remove highlight from all rows in outputArea
-        const rowsArea = outputArea.querySelectorAll('.line.highlighted');
-        rowsArea.forEach(row => {
-          row.classList.remove('highlighted');
-        });
+        if (areaLineNumber === clickedLineNumber) {
+          // Remove highlight from all rows in outputArea
+          const rowsArea = outputArea.querySelectorAll('.line.highlighted');
+          rowsArea.forEach(row => {
+            row.classList.remove('highlighted');
+          });
 
-        // Highlight the corresponding row in outputArea
-        areaLine.classList.add('highlighted');
-      }
-    });
+          // Highlight the corresponding row in outputArea
+          areaLine.classList.add('highlighted');
+        }
+      });
+    }
   });
 });
+
   
 }
+
+
 
 
 
@@ -489,27 +499,37 @@ clickableElementsOutputArea.forEach(element => {
   element.addEventListener('click', function(event) {
     const row = event.target.closest('.line');
     const clickedLineNumber = row.querySelector('.lineNumber').textContent.trim();
+    const isHighlighted = row.classList.contains('highlighted');
 
     // Find the corresponding line in outputXPath
     const xpathOutputArea = document.getElementById('outputXPath');
     const xpathLines = xpathOutputArea.querySelectorAll('.line');
 
-    xpathLines.forEach(xpathLine => {
-      const xpathLineNumber = xpathLine.querySelector('.lineNumber').textContent.trim();
+    if (!isHighlighted) {
+      // Remove highlight from all rows in outputXPath
+      const rowsXPath = xpathOutputArea.querySelectorAll('.line.highlighted');
+      rowsXPath.forEach(row => {
+        row.classList.remove('highlighted');
+      });
+    } else {
+      xpathLines.forEach(xpathLine => {
+        const xpathLineNumber = xpathLine.querySelector('.lineNumber').textContent.trim();
 
-      if (xpathLineNumber === clickedLineNumber) {
-        // Remove highlight from all rows in outputXPath
-        const rowsXPath = xpathOutputArea.querySelectorAll('.line.highlighted');
-        rowsXPath.forEach(row => {
-          row.classList.remove('highlighted');
-        });
+        if (xpathLineNumber === clickedLineNumber) {
+          // Remove highlight from all rows in outputXPath
+          const rowsXPath = xpathOutputArea.querySelectorAll('.line.highlighted');
+          rowsXPath.forEach(row => {
+            row.classList.remove('highlighted');
+          });
 
-        // Highlight the corresponding row in outputXPath
-        xpathLine.classList.add('highlighted');
-      }
-    });
+          // Highlight the corresponding row in outputXPath
+          xpathLine.classList.add('highlighted');
+        }
+      });
+    }
   });
 });
+
 
 
 
@@ -573,6 +593,9 @@ function generateBrightColor() {
 
       // If all checks pass, display success message and enable buttons
       validationMessage.innerText = 'XML Input Check: Good';
+	  
+
+    
       
     }
 
