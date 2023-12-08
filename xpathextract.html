@@ -73,12 +73,13 @@
   <textarea id="xmlInput" placeholder="Enter XML code here" oninput="validateXML()"></textarea>
   <div id="validationMessage">XML Input Check:</div>
   <button id="singleButton">Tidy XML and Extract XPATH</button>
-  <button onclick="tidyXML()">TIDY</button>
+  
 
+  <button onclick="recolorizeTags()">Recolour Tags</button>
   
 <button onclick="generateRandomXML()">Generate Random XML</button>
 
-  <button onclick="clearXMLInput()">Clear XML Input</button>
+  <button onclick="clearXMLInput()">Clear Everything</button>
 
 
 
@@ -114,25 +115,26 @@ function clearXMLInput() {
 function generateRandomXML() {
   const maxLevels = Math.floor(Math.random() * 5) + 1; // Randomly generate the maximum levels of nesting (between 1 and 5)
   const lineCount = 30; // Number of lines in the random XML
-  let randomXML = `<?xml version="1.0" encoding="UTF-8"?>\n<root>`; // Start with root element
+  let randomXML = `<?xml version="1.0" encoding="UTF-8"?><root>`; // Start with root element
 
   for (let i = 0; i < lineCount; i++) {
-    randomXML += `\n  <element_${i + 1}>`;
+    randomXML += `<element_${i + 1}>`;
 
     // Generate a random number of child elements based on the updated maxLevels
     const childCount = Math.floor(Math.random() * maxLevels) + 1;
 
     for (let j = 0; j < childCount; j++) {
-      randomXML += `\n    <child_${j + 1}>Random Text ${Math.floor(Math.random() * 100)}</child_${j + 1}>`;
+      randomXML += `<child_${j + 1}>Random Text ${Math.floor(Math.random() * 100)}</child_${j + 1}>`;
     }
 
-    randomXML += `\n  </element_${i + 1}>`;
+    randomXML += `</element_${i + 1}>`;
   }
 
-  randomXML += '\n</root>'; // Close the root element
+  randomXML += '</root>'; // Close the root element
 
   document.getElementById('xmlInput').value = randomXML; // Set the random XML content into the XML input
 }
+
 
 
 function performActions() {
@@ -419,7 +421,7 @@ function highlightXML() {
 
         let color;
         if (!tagColors[tagName]) {
-          color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+          color = generateBrightColor();
           tagColors[tagName] = color;
         } else {
           color = tagColors[tagName];
@@ -437,7 +439,7 @@ function highlightXML() {
         if (tagColors[openingTagName]) {
           color = tagColors[openingTagName];
         } else {
-          color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+          color = generateBrightColor();
           tagColors[openingTagName] = color;
         }
 
@@ -513,7 +515,40 @@ clickableElementsOutputArea.forEach(element => {
 
 }
 
+function recolorizeTags() {
+  const outputArea = document.getElementById('outputArea');
+  const tags = outputArea.querySelectorAll('.tag');
 
+  const tagColors = {};
+
+  tags.forEach(tag => {
+    const tagName = tag.getAttribute('data-tag');
+    const isClosingTag = tagName.startsWith('/');
+
+    if (!isClosingTag) {
+      // If it's an opening tag, assign or retrieve a color for it
+      if (!tagColors[tagName]) {
+        const color = generateBrightColor();
+        tagColors[tagName] = color;
+        tag.style.color = color; // Apply color to the opening tag
+      } else {
+        tag.style.color = tagColors[tagName]; // Apply the existing color to the opening tag
+      }
+    } else {
+      // If it's a closing tag, find the corresponding opening tag and apply the same color
+      const openingTagName = tagName.substring(1);
+      tag.style.color = tagColors[openingTagName]; // Apply the same color to the closing tag
+    }
+  });
+}
+
+function generateBrightColor() {
+  const r = Math.floor(Math.random() * 150) + 100; // Red component between 100 and 250
+  const g = Math.floor(Math.random() * 150) + 100; // Green component between 100 and 250
+  const b = Math.floor(Math.random() * 150) + 100; // Blue component between 100 and 250
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
 
 
 
