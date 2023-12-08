@@ -6,7 +6,13 @@
 
 .container {
   display: flex;
+align-items: flex-start;
+}
 
+.right-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Allow this container to grow to fill available space */
 }
 .line {
     /* Your existing styles for each row */
@@ -33,7 +39,7 @@
 
     #xmlInput {
       width: 50%;
-      height: 200px;
+      height: 150px;
 	  resize: vertical;
     }
     #tidyButton {
@@ -45,16 +51,26 @@
     font-size: 16px; /* Set the font size */
     font-weight: bold; /* Set the font weight to bold */
 	overflow: auto;
-        width: 100%;
+        width: 50%;
       height: 400px;
 	  text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.2);
+  }
+
+ #selectXPath {
+  	overflow: auto;
+        width: 100%;
+      height: 50px;
+    font-size: 20px; /* Set the font size */
+    font-weight: bold; /* Set the font weight to bold */
+	border: 1px solid black; 
+    /* Add any other styles you need for the outputXPath */
   }
 
   /* Styles for the outputXPath */
   #outputXPath {
   	overflow: auto;
         width: 100%;
-      height: 400px;
+      height: 350px;
     font-size: 18px; /* Set the font size */
     font-weight: bold; /* Set the font weight to bold */
 	border: 1px solid black; 
@@ -89,16 +105,46 @@
 </table>
   
 <div class="container">
-    
-      <div id="outputArea"></div>
-	  <div id="outputXPath"></div>
-    
+  <div id="outputArea"></div>
+  <div class="right-container">
+    <div id="selectXPath"></div>
+    <div id="outputXPath"></div>
+  </div>
 </div>
 
 
 <script>
-   
  
+function setTextContent(text) {
+  const selectXPathDiv = document.getElementById('selectXPath');
+
+  if (selectXPathDiv) {
+    selectXPathDiv.textContent = text;
+  }
+}
+
+ 
+ function extractContent() {
+  // Find the elements
+  const outputXPathDiv = document.getElementById('outputXPath');
+  const selectXPathDiv = document.getElementById('selectXPath');
+
+  // Check if the elements exist
+  if (outputXPathDiv && selectXPathDiv) {
+    // Find the span with class 'fullxpath' within the 'outputXPath' div
+    const fullXPathSpan = outputXPathDiv.querySelector('.line.highlighted .fullxpath');
+
+    // Check if the span exists
+    if (fullXPathSpan) {
+      // Extract content from the span and display it in the 'selectXPath' div
+      selectXPathDiv.textContent = fullXPathSpan.textContent;
+    } else {
+      // If span doesn't exist, display blank in the 'selectXPath' div
+      selectXPathDiv.textContent = '';
+    }
+  }
+}
+
 
    
 function clearXMLInput() {
@@ -108,6 +154,9 @@ function clearXMLInput() {
 
   const outputXPath = document.getElementById('outputXPath');
   outputXPath.innerHTML = ''; // Clear the contents of outputXPath
+  
+    const selectXPath = document.getElementById('selectXPath');
+  selectXPath.innerHTML = ''; // Clear the contents of selectXPath
 }
 
 function generateRandomXML() {
@@ -131,6 +180,7 @@ function generateRandomXML() {
   randomXML += '</root>'; // Close the root element
 
   document.getElementById('xmlInput').value = randomXML; // Set the random XML content into the XML input
+  validateXML();
 }
 
 
@@ -147,7 +197,8 @@ function performActions() {
 	
     
     extractXPath();
-    
+    setTextContent('Select an element on the left or xpath from the bottom');
+
   
 }
 
@@ -283,7 +334,7 @@ function extractXPath() {
       openTagsStack.push(tagName);
 
       const xpathTags = openTagsStack.join('/');
-      xpathResult += `<div class="line">[LINE <span class="lineNumber">${String(lineNumber).padStart(3, '0')}</span>] /${xpathTags}</div>`;
+      xpathResult += `<div class="line">[LINE <span class="lineNumber">${String(lineNumber).padStart(3, '0')}</span>] <span class="fullxpath">/${xpathTags}</span></div>`;
     });
 
     closeTags.forEach(() => {
@@ -310,11 +361,13 @@ clickableElements.forEach(element => {
     const rows = outputXPath.querySelectorAll('.line.highlighted');
     rows.forEach(row => {
       row.classList.remove('highlighted');
+	  extractContent();
     });
 
     // Toggle highlight on the clicked row
     if (!isHighlighted) {
       row.classList.add('highlighted');
+	  extractContent();
     }
   });
 });
@@ -350,6 +403,7 @@ clickableElementsXPath.forEach(element => {
 
           // Highlight the corresponding row in outputArea
           areaLine.classList.add('highlighted');
+		  areaLine.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       });
     }
@@ -483,11 +537,13 @@ clickableElements.forEach(element => {
     const rows = outputArea.querySelectorAll('.line.highlighted');
     rows.forEach(row => {
       row.classList.remove('highlighted');
+	  
     });
 
     // Toggle highlight on the clicked row
     if (!isHighlighted) {
       row.classList.add('highlighted');
+	  
     }
 	
   });
@@ -520,10 +576,13 @@ clickableElementsOutputArea.forEach(element => {
           const rowsXPath = xpathOutputArea.querySelectorAll('.line.highlighted');
           rowsXPath.forEach(row => {
             row.classList.remove('highlighted');
+			
           });
 
           // Highlight the corresponding row in outputXPath
           xpathLine.classList.add('highlighted');
+		  extractContent();
+		  xpathLine.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       });
     }
