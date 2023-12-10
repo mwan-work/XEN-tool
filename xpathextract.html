@@ -138,12 +138,45 @@
 <script>
 
 
+
+function performActions() {
+  
+
+
+  handleReplace();
+    tidyXML();
+	handleRestore();
+    shiftContentUp();
+    highlightXML();
+	
+    
+    extractXPath();
+    setTextContent('Select an element on the left or xpath from the bottom');
+enableRecolour();
+  
+}
+
+
+  const singleButton = document.getElementById('singleButton');
+  singleButton.addEventListener('click', performActions);
+  
+
+
 function enableRecolour() {
     var button = document.getElementById("recolour");
     if (button) {
         button.disabled = false;
     }
 }
+
+
+function disableRecolour() {
+    var button = document.getElementById("recolour");
+    if (button) {
+        button.disabled = true;
+    }
+}
+
 
 
 
@@ -210,6 +243,7 @@ function clearXMLInput() {
     const selectXPath = document.getElementById('selectXPath');
   selectXPath.innerHTML = ''; // Clear the contents of selectXPath
   validateXML();
+  disableRecolour();
 }
 
 function generateRandomXML() {
@@ -259,27 +293,6 @@ function generateRandomXML() {
 
 
 
-function performActions() {
-  
-
-
-  handleReplace();
-    tidyXML();
-	handleRestore();
-    shiftContentUp();
-    highlightXML();
-	
-    
-    extractXPath();
-    setTextContent('Select an element on the left or xpath from the bottom');
-enableRecolour();
-  
-}
-
-
-  const singleButton = document.getElementById('singleButton');
-  singleButton.addEventListener('click', performActions);
-  
   
 
 
