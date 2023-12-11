@@ -24,6 +24,11 @@
     color: yellow;
     /* Any other styles for the highlighted row */
 }
+.tag {
+    font-weight: bold;
+    /* Any other styles for the highlighted row */
+}
+
 
     #topbanner {
       width: 100%;
@@ -45,13 +50,14 @@
 	#outputArea {
     background-color: black;
     color: white; /* Set the text color to white */
+	font: Courier New;
     font-size: 16px; /* Set the font size */
-    font-weight: bold; /* Set the font weight to bold */
+    /* Set the font weight to bold */
 	overflow: auto;
         width: 99%;
       height: 441px;
 	  border: 1px solid darkgrey; 
-	  text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.2);
+	  
   }
 
  #selectXPath {
@@ -153,7 +159,7 @@ function performActions() {
     extractXPath();
     setTextContent('Select an element on the left or xpath from the bottom');
 enableRecolour();
-  
+  colorAttributeValues();
 }
 
 
@@ -774,7 +780,19 @@ function shiftContentUp() {
     xmlInput.value = ''; // Clear the content if there's only one line
   }
 }
-
+   function colorAttributeValues() {
+      const spans = document.querySelectorAll('#outputArea .tag');
+      spans.forEach(span => {
+        const content = span.textContent;
+        const matches = content.match(/="([^"]*)"/g);
+        if (matches) {
+          matches.forEach(match => {
+            const coloredMatch = match.replace(/="([^"]*)"/, '="<span style="color: lightgrey;">$1</span>"');
+            span.innerHTML = span.innerHTML.replace(match, coloredMatch);
+          });
+        }
+      });
+    }
 
 
   </script>
