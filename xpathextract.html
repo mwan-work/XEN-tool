@@ -40,7 +40,7 @@
     }
 
     #xmlInput {
-      width: 90%;
+      width: 95%;
       height: 150px;
 	  resize: vertical;
     }
@@ -50,9 +50,8 @@
 	#outputArea {
     background-color: black;
     color: white; /* Set the text color to white */
-	font: Courier New;
-    font-size: 16px; /* Set the font size */
-    /* Set the font weight to bold */
+	font-size: 16px;
+  
 	overflow: auto;
         width: 99%;
       height: 441px;
@@ -64,7 +63,7 @@
   	overflow: auto;
         width: 100%;
       height: 100px;
-    font-size: 18px; /* Set the font size */
+    font: 16px Consolas; /* Set the font size */
     font-weight: bold; /* Set the font weight to bold */
 	border: 1px solid darkgrey; 
     /* Add any other styles you need for the outputXPath */
@@ -75,13 +74,19 @@
   	overflow: auto;
         width: 100%;
       height: 298px;
-    font-size: 18px; /* Set the font size */
-    font-weight: bold; /* Set the font weight to bold */
+    font: 16px Consolas;
+    font-weight: bold;
 	border: 1px solid darkgrey; 
 	background-color: black;
-    color: white; /* Set the text color to white */
-    /* Add any other styles you need for the outputXPath */
+    color: white; 
+	
+    
   }
+  
+  #outputXPath2 {
+    display: none;
+	height: 1px;
+}
   
   #validationMessage {
       color: red; /* Set color for validation message */
@@ -107,17 +112,14 @@
   
   </div>
   </div>
-  <div id="validationMessage">XML Input Check:</div>
+  <div id="validationMessage">XML Input Check:</div><br>
+  
   <button id="singleButton">Tidy XML and Extract XPATH</button>
   
   <button onclick="generateRandomXML()">Generate Random XML</button>
 
  
-  
-  
-
-
-  <button onclick="clearXMLInput()">Clear Everything</button>
+  <button onclick="clearXMLInput()">RESET</button>
 <br><br>
 
 
@@ -131,18 +133,52 @@
   
   
   <div class="right-container">
-  <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><b>Selected Xpath:</b></div>
+  <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><b>Selected Xpath</b></div>
     <div id="selectXPath"></div>
 	<br>
-	<div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><b>Xpath List:</b></div>
+	<div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%">
+	<span style="float: left;"><b>Xpath List</b></span><span style="float: right;">Occurrence no's: <button id="occnumberON" onclick="replaceXPath()" disabled>On</button><button id="occnumberOFF" onclick="extractXPath()" disabled>Off</button></span>
+	</div>
     <div id="outputXPath"></div>
+	
   </div>
 </div>
 
-
+<div id="outputXPath2"></div>
 
 <script>
+function replaceXPath() {
+    var outputXPath1 = document.querySelectorAll("#outputXPath .fullxpath");
+    var outputXPath2 = document.querySelectorAll("#outputXPath2 .fullxpath2");
 
+    if (outputXPath1.length !== outputXPath2.length) {
+        console.error("The number of XPaths in the two outputs is different.");
+        return;
+    }
+
+    for (var i = 0; i < outputXPath1.length; i++) {
+        outputXPath1[i].innerText = outputXPath2[i].innerText;
+    }
+}
+
+
+
+
+ function extractOccurrence() {
+      const xmlInput = document.getElementById('xmlInput').value;
+      const xmlDoc = new DOMParser().parseFromString(xmlInput, 'text/xml');
+      const nodes = xmlDoc.evaluate('//*', xmlDoc, null, XPathResult.ANY_TYPE, null);
+      
+      let xpathResult = '';
+      let node = nodes.iterateNext();
+      while (node) {
+        const xpath = getXPath(node);
+        xpathResult += `<div class="xpathElement"><span class="fullxpath2">${xpath}</span></div>`;
+        node = nodes.iterateNext();
+      }
+      
+      document.getElementById('outputXPath2').innerHTML = xpathResult.trim();
+    }
 
 
 function performActions() {
@@ -154,12 +190,13 @@ function performActions() {
 	handleRestore();
     shiftContentUp();
     highlightXML();
-	
-    
+	    
+ extractOccurrence();
     extractXPath();
     setTextContent('Select an element on the left or xpath from the bottom');
 enableRecolour();
   colorAttributeValues();
+ 
 }
 
 
@@ -169,17 +206,37 @@ enableRecolour();
 
 
 function enableRecolour() {
-    var button = document.getElementById("recolour");
-    if (button) {
-        button.disabled = false;
+    var button1 = document.getElementById("recolour");
+    var button2 = document.getElementById("occnumberON"); 
+	var button3 = document.getElementById("occnumberOFF"); 
+    if (button1) {
+        button1.disabled = false;
+    }
+
+    if (button2) {
+        button2.disabled = false;
+    }
+	
+	   if (button3) {
+        button3.disabled = false;
     }
 }
 
 
 function disableRecolour() {
-    var button = document.getElementById("recolour");
-    if (button) {
-        button.disabled = true;
+    var button1 = document.getElementById("recolour");
+    var button2 = document.getElementById("occnumberON"); 
+	var button3 = document.getElementById("occnumberOFF"); 
+    if (button1) {
+        button1.disabled = true;
+    }
+
+    if (button2) {
+        button2.disabled = true;
+    }
+	
+	   if (button3) {
+        button3.disabled = true;
     }
 }
 
@@ -794,6 +851,31 @@ function shiftContentUp() {
       });
     }
 
+function test(){
+
+const outputxpathLines = document.querySelectorAll('.outputXPath .line');
+const outputXpath2XPaths = document.querySelectorAll('.outputXPath2');
+
+
+const lineToXPathMap = {};
+outputxpathLines.forEach(line => {
+    const lineNumber = line.querySelector('.lineNumber').textContent.trim();
+    const xpath = line.textContent.trim().split('[LINE')[1];
+    lineToXPathMap[lineNumber] = xpath;
+});
+
+
+outputXpath2XPaths.forEach(xpathElement => {
+    const xpath = xpathElement.textContent.trim();
+   const lineNumber = xpath.match(/\d+/)[0]; // Extracts numbers from the string
+
+
+    const correspondingLine = lineToXPathMap[lineNumber];
+
+    // Update the xmloutput2 with corresponding [LINE xxx]
+    xpathElement.textContent = correspondingLine;
+});
+}
 
   </script>
 </body>
