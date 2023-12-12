@@ -82,7 +82,7 @@ body {
 	border: 1px solid darkgrey; 
 	background-color: black;
     color: white; 
-	
+	white-space: nowrap;
     
   }
   
@@ -140,7 +140,7 @@ body {
     <div id="selectXPath"></div>
 	<br>
 	<div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%">
-	<span style="float: left;"><b>Xpath List</b></span><span style="float: right;">Predicate: <button id="occnumberON" onclick="replaceXPath()" disabled>On</button><button id="occnumberOFF" onclick="extractXPath()" disabled>Off</button></span>
+	<span style="float: left;"><b>Xpath List</b></span><span style="float: right;">Predicate: <button id="occnumberON" onclick="replaceXPath()" disabled>On</button><button id="occnumberOFF" onclick="removeNumbersInSquareBrackets()" disabled>Off</button></span>
 	</div>
     <div id="outputXPath"></div>
 	
@@ -150,6 +150,23 @@ body {
 <div id="outputXPath2"></div>
 
 <script>
+
+
+
+
+
+function removeNumbersInSquareBrackets() {
+    const outputXpathDiv = document.getElementById('outputXPath');
+    const spans = outputXpathDiv.querySelectorAll('span.fullxpath');
+    
+    spans.forEach(span => {
+        const text = span.textContent;
+        const newText = text.replace(/\[\d+\]/g, ''); // Removes numbers within square brackets
+        span.textContent = newText;
+    });
+	extractContent();
+}
+
 function replaceXPath() {
     var outputXPath1 = document.querySelectorAll("#outputXPath .fullxpath");
     var outputXPath2 = document.querySelectorAll("#outputXPath2 .fullxpath2");
@@ -162,6 +179,7 @@ function replaceXPath() {
     for (var i = 0; i < outputXPath1.length; i++) {
         outputXPath1[i].innerText = outputXPath2[i].innerText;
     }
+	extractContent();
 }
 
 
