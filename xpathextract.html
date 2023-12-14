@@ -127,7 +127,7 @@ body {
   2) Click the <b>[Extract Xpath]</b> button.<br>
   3) Select an element in [Formatted XML] to extract the XPath. 
   </p>
-  <p>Want to test it out?:  <button onclick="generateRandomXML()">Generate Random XML</button>
+  <p>Want to test it out?:  <button onclick="checkAndFixTags()">Generate Random XML</button>
 </p>
   
   </div>
@@ -248,6 +248,7 @@ function performActions() {
 
 
   handleReplace();
+  checkAndFixTags()
     tidyXML();
 	handleRestore();
     shiftContentUp();
@@ -857,6 +858,24 @@ function validateXML() {
         return;
     }
 
+    // Check for self-closing tags
+    const selfClosingTags = ['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base'];
+    let selfClosingTagDetected = false;
+
+    selfClosingTags.forEach(tag => {
+        const foundTags = xmlDoc.getElementsByTagName(tag);
+        if (foundTags.length > 0) {
+            selfClosingTagDetected = true;
+            return;
+        }
+    });
+
+    if (selfClosingTagDetected) {
+        validationMessage.innerText = 'XML Validation: Self-closing tags detected. Errors may occur.';
+        validationMessage.style.color = 'red'; // Set color to red for error message
+        return;
+    }
+
     // Check for parsing errors
     const parserErrors = xmlDoc.getElementsByTagName('parsererror');
     if (parserErrors.length > 0) {
@@ -871,7 +890,6 @@ function validateXML() {
     validationMessage.innerText = 'XML Input Check: Good';
     validationMessage.style.color = 'green'; // Set color to green for success message
 }
-
 
 // Function to extract error message from the provided text (unchanged from previous code)
 function extractErrorMessage(errorText) {
@@ -911,6 +929,46 @@ function shiftContentUp() {
         }
       });
     }
+function checkAndFixTags() {
+    // Get the input from the textarea with id 'xmlInput'
+    var inputText = document.getElementById('xmlInput').value;
+
+    // Define an array of self-closing tags
+    var selfClosingTags = ['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base'];
+
+    // Loop through each self-closing tag
+    selfClosingTags.forEach(tag => {
+        // Create regex patterns for both open and close tags with or without attributes
+        var openTagPattern = new RegExp('<' + tag + '([^>]*)>', 'g');
+        var closeTagPattern = new RegExp('</' + tag + '>', 'g');
+
+        // Check if open tag exists but close tag doesn't
+        if (inputText.match(openTagPattern) && !inputText.match(closeTagPattern)) {
+            // Create the close tag and insert it after the open tag
+            inputText = inputText.replace(openTagPattern, '<' + tag + '$1></' + tag + '>');
+        }
+    });
+
+    // Update the textarea with the modified content
+    document.getElementById('xmlInput').value = inputText;
+}
+
+
+function checkAndFixTags2() {
+    // Get the input from the textarea with id 'xmlInput'
+    var inputText = document.getElementById('xmlInput').value;
+
+    // Remove unnecessary closing tags
+    inputText = inputText.replace(/<\/(br|hr|img|input|meta|link|area|base)>/g, '');
+
+    // Update the textarea with the modified content
+    document.getElementById('xmlInput').value = inputText;
+
+    // Update the output area div with the modified content
+    document.getElementById('outputArea').innerHTML = inputText;
+}
+
+
 
 
 
