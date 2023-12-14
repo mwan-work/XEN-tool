@@ -117,24 +117,24 @@ body {
 <div class="container">
 <div class="right-container"><p>
 <b>XML Input:</b><br>
-  <textarea id="xmlInput" placeholder="Enter XML code here" oninput="validateXML()"></textarea>
+  <textarea id="xmlInput" placeholder="Enter XML code here" oninput="enableButtonIfTextareaNotEmpty()"></textarea>
   </p>
   </div>
   <div class="right-container">
   <p>
   <b>Instructions:</b><br>
   1) XML code goes into the text box on the left.<br>
-  2) Click the <b>[Extract Xpath]</b> button.<br>
-  3) Select an element in [Formatted XML] to extract the XPath. 
+  2) Click the <b>[Format XML and Extract XPath]</b> button.<br>
+  3) Select an element in <b>[Formatted XML]</b> to show the XPath. 
   </p>
-  <p>Want to test it out?:  <button onclick="checkAndFixTags()">Generate Random XML</button>
+  <p>Want to test it out?:  <button onclick="generateRandomXML()">Generate Random XML</button>
 </p>
   
   </div>
   </div>
   <div id="validationMessage">XML Validation:</div><br>
   
-  <button id="singleButton">Format XML and Extract XPath</button>
+  <button id="singleButton" disabled>Format XML and Extract XPath</button>
   
  
  
@@ -146,7 +146,7 @@ body {
 
 <div class="right-container">
 <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 99%">
-<span style="float: left;"><b>Formatted XML</b> </span><span style="float: right;">Colour: <button id="nocolour" onclick="nocolourTags()" disabled>Remove</button> <button id="recolour" onclick="recolorizeTags()" disabled>Re-do</button></span></div>
+<span style="float: left;"><b>Formatted XML</b> </span><span style="float: right;">Colour: <button id="nocolour" onclick="nocolourTags()" disabled>Remove</button> <button id="recolour" onclick="recolorizeTags()" disabled>Redo</button></span></div>
  <div id="outputArea"></div>
  </div>
   
@@ -193,6 +193,18 @@ body {
 <script>
 
 
+function enableButtonIfTextareaNotEmpty() {
+    var xmlInput = document.getElementById('xmlInput');
+    var singleButton = document.getElementById('singleButton');
+
+    // Check if textarea is not empty
+    if (xmlInput.value.trim() !== '') {
+        singleButton.disabled = false; // Enable the button
+    } else {
+        singleButton.disabled = true; // Keep the button disabled
+    }
+	validateXML();
+}
 
 
 
@@ -401,7 +413,8 @@ function generateRandomXML() {
     const xmlString = `<ead xmlns="urn:isbn:1-931666-22-9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:isbn:1-931666-22-9 http://www.loc.gov/ead/ead.xsd"><eadheader><eadid identifier="${Math.random().toString(36).substring(7)}" country="${randomCountry}">${Math.random().toString(36).substring(7)}</eadid><filedesc><titlestmt><titleproper type="main">${randomTitle}</titleproper><author role="writer">${randomCreator}</author></titlestmt><publicationstmt><publisher>Publisher Name</publisher><address>${addressLines.join('')}<country>${randomCountry}</country></address><date>${Math.floor(Math.random() * 30) + 1990}</date></publicationstmt><seriesstmt>Example Series Statement</seriesstmt></filedesc><archdesc><did><repository><corpname>Repository Name</corpname><address>${addressLines.join('')}<country>${randomCountry}</country></address></repository><unittitle>${randomTitle}</unittitle><unitid>${Math.random().toString(36).substring(7)}</unitid><origination>${randomCreator}</origination><physdesc>Physical Description</physdesc><abstract>Collection abstract or summary</abstract><langmaterial lang="${randomLanguage}">${randomLanguage}</langmaterial><materialspec>Materials specification</materialspec><physloc>Physical Location</physloc><accessrestrict>Access Restrictions</accessrestrict><userestrict>Use Restrictions</userestrict><prefercite>Preferred Citation</prefercite><acqinfo>Acquisition Information</acqinfo><altformavail>Alternate Forms Available</altformavail><relatedmaterial>Related Material</relatedmaterial><separatedmaterial>Separated Material</separatedmaterial><processinfo>Processing Information</processinfo><accruals>Accruals</accruals><appraisal>Appraisal Information</appraisal><custodhist>Custodial History</custodhist><scopecontent>Scope and Content</scopecontent><arrangement>Arrangement</arrangement><bioghist>Biographical or Historical Information</bioghist><controlaccess>Control Access Subjects</controlaccess><otherfindaid>Other Finding Aids</otherfindaid><physdesc>Physical Description</physdesc></did></archdesc></eadheader></ead>`;
 
     document.getElementById("xmlInput").value = xmlString;
-	validateXML();
+	
+	enableButtonIfTextareaNotEmpty();
 }
 
   
@@ -889,6 +902,8 @@ function validateXML() {
     // If all checks pass, display success message and enable buttons
     validationMessage.innerText = 'XML Input Check: Good';
     validationMessage.style.color = 'green'; // Set color to green for success message
+	
+	
 }
 
 // Function to extract error message from the provided text (unchanged from previous code)
@@ -933,6 +948,16 @@ function checkAndFixTags() {
     // Get the input from the textarea with id 'xmlInput'
     var inputText = document.getElementById('xmlInput').value;
 
+    // Remove slashes from self-closing tags
+    inputText = inputText.replace(/<br\/>/g, '<br>');
+    inputText = inputText.replace(/<hr\/>/g, '<hr>');
+    inputText = inputText.replace(/<img([^>]*)\/>/g, '<img$1>');
+    inputText = inputText.replace(/<input([^>]*)\/>/g, '<input$1>');
+    inputText = inputText.replace(/<meta([^>]*)\/>/g, '<meta$1>');
+    inputText = inputText.replace(/<link([^>]*)\/>/g, '<link$1>');
+    inputText = inputText.replace(/<area([^>]*)\/>/g, '<area$1>');
+    inputText = inputText.replace(/<base([^>]*)\/>/g, '<base$1>');
+
     // Define an array of self-closing tags
     var selfClosingTags = ['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base'];
 
@@ -952,23 +977,6 @@ function checkAndFixTags() {
     // Update the textarea with the modified content
     document.getElementById('xmlInput').value = inputText;
 }
-
-
-function checkAndFixTags2() {
-    // Get the input from the textarea with id 'xmlInput'
-    var inputText = document.getElementById('xmlInput').value;
-
-    // Remove unnecessary closing tags
-    inputText = inputText.replace(/<\/(br|hr|img|input|meta|link|area|base)>/g, '');
-
-    // Update the textarea with the modified content
-    document.getElementById('xmlInput').value = inputText;
-
-    // Update the output area div with the modified content
-    document.getElementById('outputArea').innerHTML = inputText;
-}
-
-
 
 
 
