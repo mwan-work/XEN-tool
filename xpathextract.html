@@ -945,36 +945,39 @@ function shiftContentUp() {
       });
     }
 function checkAndFixTags() {
-    // Get the input from the textarea with id 'xmlInput'
     var inputText = document.getElementById('xmlInput').value;
 
-    // Remove slashes from self-closing tags
-    inputText = inputText.replace(/<br\/>/g, '<br>');
-    inputText = inputText.replace(/<hr\/>/g, '<hr>');
-    inputText = inputText.replace(/<img([^>]*)\/>/g, '<img$1>');
-    inputText = inputText.replace(/<input([^>]*)\/>/g, '<input$1>');
-    inputText = inputText.replace(/<meta([^>]*)\/>/g, '<meta$1>');
-    inputText = inputText.replace(/<link([^>]*)\/>/g, '<link$1>');
-    inputText = inputText.replace(/<area([^>]*)\/>/g, '<area$1>');
-    inputText = inputText.replace(/<base([^>]*)\/>/g, '<base$1>');
+    var selfClosingTags = ['br', 'hr', 'input', 'meta', 'link', 'area', 'base'];
 
-    // Define an array of self-closing tags
-    var selfClosingTags = ['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base'];
+    var selfClosingTagsWithAttributes = ['img']; // Add other self-closing tags as needed
 
-    // Loop through each self-closing tag
-    selfClosingTags.forEach(tag => {
-        // Create regex patterns for both open and close tags with or without attributes
-        var openTagPattern = new RegExp('<' + tag + '([^>]*)>', 'g');
+    selfClosingTagsWithAttributes.forEach(tag => {
+        var pattern = new RegExp('<' + tag + '(\\s+[^>]*)?>(?!</' + tag + '>)', 'g');
         var closeTagPattern = new RegExp('</' + tag + '>', 'g');
 
-        // Check if open tag exists but close tag doesn't
-        if (inputText.match(openTagPattern) && !inputText.match(closeTagPattern)) {
-            // Create the close tag and insert it after the open tag
-            inputText = inputText.replace(openTagPattern, '<' + tag + '$1></' + tag + '>');
+        inputText = inputText.replace(pattern, function(match) {
+            if (!match.match(closeTagPattern)) {
+                if (match.includes('/>')) {
+                    return match;
+                } else {
+                    return match.replace('>', ' />');
+                }
+            }
+            return match;
+        });
+    });
+
+    selfClosingTags.forEach(tag => {
+        if (selfClosingTagsWithAttributes.indexOf(tag) === -1) {
+            var openTagPattern = new RegExp('<' + tag + '(\\s+[^>]*)?>', 'g');
+            var closeTagPattern = new RegExp('</' + tag + '>', 'g');
+
+            if (inputText.match(openTagPattern) && !inputText.match(closeTagPattern)) {
+                inputText = inputText.replace(openTagPattern, '<' + tag + '$1></' + tag + '>');
+            }
         }
     });
 
-    // Update the textarea with the modified content
     document.getElementById('xmlInput').value = inputText;
 }
 
