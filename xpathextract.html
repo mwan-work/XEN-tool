@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -127,8 +128,7 @@ body {
   2) Click the <b>[Format XML and Extract XPath]</b> button.<br>
   3) Select an element in <b>[Formatted XML]</b> to show the XPath. 
   </p>
-  <p>Want to test it out?:  <button onclick="generateRandomXML()">Generate Random XML</button>
-</p>
+  <p>Want to test it out?:  <button onclick="generateRandomXML()">Generate Random XML</button></p>
   
   </div>
   </div>
@@ -867,7 +867,7 @@ function validateXML() {
 
     if (dcTags.length > 0 || oaiDcTags.length > 0) {
         validationMessage.innerText = 'XML Validation: Dublin Core tags detected. Errors may occur.';
-        validationMessage.style.color = 'red'; // Set color to orange for warning message
+        validationMessage.style.color = 'red'; 
         return;
     }
 
