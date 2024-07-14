@@ -11,6 +11,9 @@ body {
   display: flex;
 
 }
+.selectxpathdiv.highlighted {
+  background-color: yellow; /* Change this to your preferred highlight color */
+}
 
 
 .top-div {
@@ -33,6 +36,14 @@ body {
   flex-grow: 1; 
   width: 50%;
 }
+
+.centre-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; 
+  width: 100%;
+}
+
 .line {
 
 }
@@ -102,6 +113,18 @@ body {
     
   }
   
+  #outputRule{
+  	overflow: auto;
+        width: 100%;
+      height: 150px;
+    font: 16px Consolas; 
+    font-weight: bold; 
+	border: 1px solid darkgrey; 
+	background-color: white;
+    white-space: pre; /* This ensures whitespace is preserved */
+  }
+  
+  
   #outputXPath2 {
     display: none;
 	height: 1px;
@@ -128,7 +151,7 @@ body {
   2) Click the <b>[Format XML and Extract XPath]</b> button.<br>
   3) Select an element in <b>[Formatted XML]</b> to show the XPath. 
   </p>
-  <p>Want to test it out?:  <button onclick="generateRandomXML()">Generate Random XML</button></p>
+  <p>Test with random XML:  <button onclick="generateRandomXML()">Generate Random XML</button></p>
   
   </div>
   </div>
@@ -152,45 +175,91 @@ body {
   
   
   <div class="right-container">
-  <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><b>Selected Xpath</b></div>
-    <div id="selectXPath"></div>
-	<br>
-	<div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%">
-	<span style="float: left;"><b>Xpath List</b></span><span style="float: right;">Predicate: <button id="occnumberON" onclick="replaceXPath()" disabled>On</button><button id="occnumberOFF" onclick="removeNumbersInSquareBrackets()" disabled>Off</button></span>
+  	<div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%">
+	<span style="float: left;"><b>Xpath List</b></span><span style="float: right;">Occurence: <button id="occnumberON" onclick="replaceXPath()" disabled>On</button><button id="occnumberOFF" onclick="removeNumbersInSquareBrackets()" disabled>Off</button></span>
 	</div>
     <div id="outputXPath"></div>
+	<br>
+  <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>Selected Xpath and Attributes</b></span><span style="float: right;"><button id="btn_copyxpath" onclick="copyHighlightedText()" disabled>Copy Highlighted Xpath</button></span></div>
+    <div id="selectXPath"></div>
+	
+
 	
   </div>
 </div>
-
+<br>
+<div class="centre-container">
+   <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>Primo Normalisation Rule Template</b></span><span style="float: right;"><button id="btn_copyrule" onclick="copyOutputRule()" disabled>Copy Rule</button></span></div>
+    <div id="outputRule"></div>
+</div>
 <div id="outputXPath2"></div>
 
 
 
-  <div class="top-div">
-  What is this?<br>
-  This tool does two things: 
-  1) Tidy up the XML code. Nodes will break into the next line with indentation for better display.
-  2) Extracts Xpath
-  
-  Does it store any information I put in?
-  Absolutely not.
-  
-  How does it work?
-  XML code goes into the [XML Input] box. Correct line formatting isn't required, and single line codes are accepted. Make sure there is only a single root element, and no tags left open. After clicking [Tidy and Extract], the XML code in the [XML Input] box will be re-formatted. This same code would then display in the [Tidy XML] box showing line numbers. All the Xpath will be extracted to the [Xpath List] box, displaying line numbers that correspond to the elements in the [Tidy XML] box.
-  
-  Can I find xpath for a specific element?
-  Yes, click on the desired element in [Tidy XML] and the Xpath will display in the [Selected Xpath] window, as well as any attributes associated with it.
-  
-  Difficult to see certain coloured tags
-  Click on 'No Colour' button to remove colouring, or [Recolour] to re-randomize.
-  
-  
-  
-  </div>
 
 
 <script>
+
+   function generateRule() {
+        var selectXPath = document.getElementById('selectXPath').innerText.trim();
+var btn_copyxpath = document.getElementById('btn_copyxpath');
+var btn_copyrule = document.getElementById('btn_copyrule');
+
+		if (!selectXPath) {
+        document.getElementById('outputRule').innerText = '';
+		
+btn_copyrule.disabled = true;
+
+btn_copyxpath.disabled = true;
+        return;
+    }
+
+        var firstLine = selectXPath.split('\n')[0].trim();
+
+        // Function to amend the XPath according to the rules
+        function amendXPath(xpath) {
+            return xpath.replace(/(\w+:\w+)(\[\d+\])?/g, (match, p1, p2) => {
+                if (p2) {
+                    return `*[name()='${p1}']${p2}`;
+                } else {
+                    return `*[name()='${p1}']`;
+                }
+            });
+        }
+
+        var amendedXPath = amendXPath(firstLine);
+        var outputRule = `rule "copy ${firstLine}"
+when
+    true
+then
+    copy "${amendedXPath}" to "dc"."field"
+end
+        `;
+        document.getElementById('outputRule').innerText = outputRule;
+    }
+
+
+  function copyOutputRule() {
+        var textToCopy = document.getElementById('outputRule').innerText.trim();
+
+        // Create a textarea element and set its value to the text to be copied
+        var textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px'; // Move the textarea off-screen
+        document.body.appendChild(textarea);
+
+        // Select and copy the text inside the textarea
+        textarea.select();
+        document.execCommand('copy');
+
+        // Remove the textarea from the DOM
+        document.body.removeChild(textarea);
+
+        // Provide visual feedback or alert
+        alert('Rule copied to clipboard!');
+    }
 
 
 function enableButtonIfTextareaNotEmpty() {
@@ -259,19 +328,21 @@ function performActions() {
   
 
 
-  handleReplace();
+  //handleReplace();
   checkAndFixTags()
    tidyXML();
-	handleRestore();
+   
+	//handleRestore();
     shiftContentUp();
+	
     highlightXML();
 	    
  extractOccurrence();
     extractXPath();
-    setTextContent('Select an element on the left or xpath from the bottom');
+    setTextContent('Select an element on the left or xpath from the top');
 enableRecolour();
   colorAttributeValues();
- 
+ //generateRule();
 }
 
 
@@ -321,6 +392,17 @@ function disableRecolour() {
 		   if (button4) {
         button4.disabled = true;
     }
+	
+	var btn_copyrule = document.getElementById('btn_copyrule');
+		if (btn_copyrule) {
+        btn_copyrule.disabled = true;
+    }
+	
+	var btn_copyxpath = document.getElementById('btn_copyxpath');
+		if (btn_copyxpath) {
+        btn_copyxpath.disabled = true;
+    }
+	
 }
 
 
@@ -334,19 +416,20 @@ function setTextContent(text) {
     selectXPathDiv.textContent = text;
   }
 }
-
- 
- function extractContent() {
+function extractContent() {
   const outputXPathDiv = document.getElementById('outputXPath');
   const selectXPathDiv = document.getElementById('selectXPath');
   const outputAreaDiv = document.getElementById('outputArea');
-
+ 
+ 
   if (outputXPathDiv && selectXPathDiv && outputAreaDiv) {
     const fullXPathSpan = outputXPathDiv.querySelector('.line.highlighted .fullxpath');
 
     if (fullXPathSpan) {
       const fullXPath = fullXPathSpan.textContent.trim();
-      selectXPathDiv.innerHTML = fullXPath;
+      const prefix = '<div class="selectxpathdiv"><span class="selectxpathspan">';
+      const suffix = '</span></div>';
+      selectXPathDiv.innerHTML = prefix + fullXPath + suffix;
 
       const highlightedLineDiv = outputAreaDiv.querySelector('.line.highlighted');
 
@@ -358,22 +441,88 @@ function setTextContent(text) {
           const attributeNames = tagContent.match(/\b([^=\s]+)=/g);
 
           if (attributeNames && attributeNames.length > 0) {
-            const formattedAttributes = attributeNames.map(attr => `${fullXPath}/@${attr.slice(0, -1)}`).join('<br>');
-            selectXPathDiv.innerHTML += '<br>' + formattedAttributes.replace(/\s/g, '<br>');
+			  const formattedAttributes = attributeNames.map(attr => `${prefix}${fullXPath}/@${attr.slice(0, -1)}${suffix}`).join('');
+selectXPathDiv.innerHTML += formattedAttributes;
+			 console.log("423");
+
           } else {
-            selectXPathDiv.innerHTML += '<br>';
+            selectXPathDiv.innerHTML += prefix + suffix;
+			console.log("427");
+
           }
         } else {
-          selectXPathDiv.innerHTML += '<br>No tag span found.';
+          selectXPathDiv.innerHTML += prefix + 'No tag span found.' + suffix;
+		  console.log("432");
+
         }
       } else {
-        selectXPathDiv.innerHTML += '<br>No content found.';
+        selectXPathDiv.innerHTML += prefix + 'No content found.' + suffix;
+		console.log("437");
+
       }
     } else {
       selectXPathDiv.innerHTML = '';
+	 console.log("442");
+
     }
   }
+  addClickEventToSelectXPathDivs();
+  
+  
+  
+var btn_copyrule = document.getElementById('btn_copyrule');
+btn_copyrule.disabled = false;
+
+generateRule();
+  
 }
+
+function addClickEventToSelectXPathDivs() {
+  const selectXPathDivs = document.querySelectorAll('.selectxpathdiv');
+  selectXPathDivs.forEach(div => {
+    div.addEventListener('click', function() {
+      // Remove highlight from all selectXPathDivs
+      selectXPathDivs.forEach(d => d.classList.remove('highlighted'));
+      // Add highlight to the clicked selectXPathDiv
+      this.classList.add('highlighted');
+	  
+	  
+var btn_copyxpath = document.getElementById('btn_copyxpath');
+btn_copyxpath.disabled = false;
+      // Generate rule based on the highlighted row
+      generateRuleFromHighlightedRow(this);
+    });
+  });
+}
+
+function generateRuleFromHighlightedRow(highlightedDiv) {
+  var selectXPath = highlightedDiv.innerText.trim();
+  var firstLine = selectXPath.split('\n')[0].trim();
+
+  // Function to amend the XPath according to the rules
+  function amendXPath(xpath) {
+    return xpath.replace(/(\w+:\w+)(\[\d+\])?/g, (match, p1, p2) => {
+      if (p2) {
+        return `*[name()='${p1}']${p2}`;
+      } else {
+        return `*[name()='${p1}']`;
+      }
+    });
+  }
+
+  var amendedXPath = amendXPath(firstLine);
+  var outputRule = `rule "copy ${firstLine}"
+when
+    true
+then
+    copy "${amendedXPath}" to "dc"."field"
+end
+  `;
+  document.getElementById('outputRule').innerText = outputRule;
+}
+
+
+
 
 
 
@@ -388,6 +537,10 @@ function clearXMLInput() {
   
     const selectXPath = document.getElementById('selectXPath');
   selectXPath.innerHTML = ''; // Clear the contents of selectXPath
+  
+  const outputRule = document.getElementById('outputRule');
+  outputRule.innerHTML = ''; // Clear the contents of selectXPath
+  
   validateXML();
   disableRecolour();
 }
@@ -547,7 +700,7 @@ function extractXPath() {
     const closeTags = line.match(/<\/.*?>/g) || [];
 
     openTags.forEach((openTag) => {
-      const tagName = openTag.match(/<([^>\s]+)[^>]*>/)[1].toLowerCase();
+      const tagName = openTag.match(/<([^>\s]+)[^>]*>/)[1];
       openTagsStack.push(tagName);
 
       const xpathTags = openTagsStack.join('/');
@@ -579,12 +732,16 @@ clickableElements.forEach(element => {
     rows.forEach(row => {
       row.classList.remove('highlighted');
 	  extractContent();
+	  console.log("790");
+
     });
 
     // Toggle highlight on the clicked row
     if (!isHighlighted) {
       row.classList.add('highlighted');
 	  extractContent();
+	  console.log("798");
+	 // generateRule();
     }
   });
 });
@@ -620,7 +777,7 @@ clickableElementsXPath.forEach(element => {
 
           // Highlight the corresponding row in outputArea
           areaLine.classList.add('highlighted');
-		  extractContent()
+		  extractContent();
 		  areaLine.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       });
@@ -632,10 +789,50 @@ clickableElementsXPath.forEach(element => {
 }
 
 
-
-
+function copyHighlightedText() {
+  const highlightedDiv = document.querySelector('.selectxpathdiv.highlighted');
+  if (highlightedDiv) {
+    const textToCopy = highlightedDiv.innerText.trim();
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      console.log('Xpath copied to clipboard');
+	  alert('Xpath copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+    });
+  } else {
+    console.log('No highlighted text to copy');
+  }
+}
 
 function getXPath(node) {
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    const element = node;
+    const sameTagSiblings = Array.from(element.parentNode.childNodes)
+      .filter(e => e.tagName === element.tagName && e.nodeType === Node.ELEMENT_NODE);
+
+    const index = sameTagSiblings.indexOf(element) + 1;
+
+    let xpath = '/' + element.tagName + '[' + index + ']';
+
+    let parentNode = element.parentNode;
+    while (parentNode !== null && parentNode.nodeType === Node.ELEMENT_NODE) {
+      const sameTagParentSiblings = Array.from(parentNode.parentNode.childNodes)
+        .filter(e => e.tagName === parentNode.tagName && e.nodeType === Node.ELEMENT_NODE);
+      
+      const parentIndex = sameTagParentSiblings.indexOf(parentNode) + 1;
+      xpath = '/' + parentNode.tagName + '[' + parentIndex + ']' + xpath;
+      
+      parentNode = parentNode.parentNode;
+    }
+
+    return xpath;
+  }
+  return '';
+}
+
+
+
+function getXPath_backup(node) {
   if (node.nodeType === Node.ELEMENT_NODE) {
     const element = node;
     const sameTagSiblings = Array.from(element.parentNode.childNodes)
@@ -784,6 +981,8 @@ clickableElementsOutputArea.forEach(element => {
       const rowsXPath = xpathOutputArea.querySelectorAll('.line.highlighted');
       rowsXPath.forEach(row => {
         row.classList.remove('highlighted');
+		extractContent();
+		console.log("1039");
       });
     } else {
       xpathLines.forEach(xpathLine => {
@@ -794,7 +993,9 @@ clickableElementsOutputArea.forEach(element => {
           const rowsXPath = xpathOutputArea.querySelectorAll('.line.highlighted');
           rowsXPath.forEach(row => {
             row.classList.remove('highlighted');
-			
+					var btn_copyrule = document.getElementById('btn_copyrule');
+	btn_copyxpath.disabled = true;	
+			console.log("1049");
           });
 
           // Highlight the corresponding row in outputXPath
