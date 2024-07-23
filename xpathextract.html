@@ -3,6 +3,7 @@
 <html>
 <head>
   <title>XML Tool</title>
+  
   <style>
 body {
   background-color: #f5f5f5; /* Light grey color */
@@ -61,7 +62,7 @@ body {
 
     #topbanner {
       width: 100%;
-      height: 60px;
+      height: 80px;
 	  background-color: purple;
 	  border: 1px solid purple;
 	  color: white;
@@ -116,7 +117,7 @@ body {
   #outputRule{
   	overflow: auto;
         width: 100%;
-      height: 150px;
+      height: 170px;
     font: 16px Consolas; 
     font-weight: bold; 
 	border: 1px solid darkgrey; 
@@ -136,7 +137,9 @@ body {
   </style>
 </head>
 <body>
-<div id="topbanner"><font size=12>XML TOOL</font></div>
+<div id="topbanner"><font size=12>XML TOOL</font><br>
+<font size=4>Xpath Extraction and XML Normalisation Rule Builder</font>
+</div>
 <br>
 <div class="container">
 <div class="right-container"><p>
@@ -147,11 +150,16 @@ body {
   <div class="right-container">
   <p>
   <b>Instructions:</b><br>
-  1) XML code goes into the text box on the left.<br>
+  1) XML record goes into the <b>[XML Input]</b> box on the left.<br>
   2) Click the <b>[Format XML and Extract XPath]</b> button.<br>
-  3) Select an element in <b>[Formatted XML]</b> to show the XPath. 
+  3) Select an element in <b>[Formatted XML]</b> to show the XPath.<br>
+  4) Create an XML normalisation rule using the <b>[XML Normalisation Rule Builder]</b>.
   </p>
-  <p>Test with random XML:  <button onclick="generateRandomXML()">Generate Random XML</button></p>
+  <p>Test with random record:<br>  
+  
+  <button onclick="generateRandomXML3()">Generic XML</button> <button onclick="generateRandomXML2()">OAI_DC</button> 
+  <button onclick="generateRandomXML1()">EAD</button><br>
+  </p>
   
   </div>
   </div>
@@ -189,8 +197,49 @@ body {
 </div>
 <br>
 <div class="centre-container">
-   <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>Primo Normalisation Rule Template</b></span><span style="float: right;"><button id="btn_copyrule" onclick="copyOutputRule()" disabled>Copy Rule</button></span></div>
-    <div id="outputRule"></div>
+   <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>XML Normalisation Rule Builder</b></span><span style="float: right;">Condition: <select id="list_when" onchange="generateRuleFromHighlightedRow(document.querySelector('.selectxpathdiv.highlighted'))" class='form-control'>
+  <option>true</option>
+<option>exist</option>
+<option>equals</option>
+<option>starts with</option> 
+<option>contains (case)</option>
+<option>contains (non-case)</option>
+ </select>&nbsp;&nbsp;&nbsp;Function: <select id="list_function" onchange="generateRuleFromHighlightedRow(document.querySelector('.selectxpathdiv.highlighted'))" class='form-control'>
+  <option>copy</option>
+<option>set value</option>
+<option>set to TEMP</option>
+</select>&nbsp;&nbsp;&nbsp;Target: <select id="list_fields" onchange="generateRuleFromHighlightedRow(document.querySelector('.selectxpathdiv.highlighted'))" class='form-control'>
+  <option disabled style="font-style:italic">--------</option> 
+<option disabled style="font-style:italic">Dublin Core</option>
+<option disabled style="font-style:italic"></option>
+<option>dc:identifier</option>
+<option>dc:title</option>
+<option>dc:creator</option>
+<option>dc:subject</option>
+<option>dc:description</option>
+<option>dc:publisher</option>
+<option>dc:contributor</option>
+<option>dc:date</option>
+<option>dc:type</option>
+<option>dc:format</option>
+<option>dc:source</option>
+<option>dc:language</option>
+<option>dc:relation</option>
+<option>dc:coverage</option>
+<option>dc:rights</option>
+
+<option disabled style="font-style:italic">--------</option>
+<option disabled style="font-style:italic">Other</option>
+<option disabled style="font-style:italic"></option>
+<option>local field</option>
+<option>resource type</option>
+
+
+
+</select>&nbsp;&nbsp;&nbsp;<button id="btn_copyrule" onclick="copyOutputRule()" disabled>Copy Nomalisation Rule</button></span></div>
+  <div id="outputRule" contenteditable="true" spellcheck="false"></div>
+
+
 </div>
 <div id="outputXPath2"></div>
 
@@ -199,44 +248,271 @@ body {
 
 
 <script>
+ let highlightedValue;
+ 
+ 
+ function getHighlightedValue() {
+  // Get the highlighted line element
+  const highlightedLineDiv = document.querySelector('.line.highlighted');
 
-   function generateRule() {
-        var selectXPath = document.getElementById('selectXPath').innerText.trim();
-var btn_copyxpath = document.getElementById('btn_copyxpath');
-var btn_copyrule = document.getElementById('btn_copyrule');
+  // Get the highlighted XPath element
+  const selectXPathDiv = document.querySelector('.selectxpathdiv.highlighted');
 
-		if (!selectXPath) {
+  if (highlightedLineDiv) {
+    // Find the content within the highlighted element
+    const highlightedContent = highlightedLineDiv.textContent.trim();
+
+    // Use a regular expression to remove leading numbers and spaces
+    const cleanedContent = highlightedContent.replace(/^\d+\s*/, '');
+
+    // Get the XPath from .selectxpathdiv.highlighted
+    let highlightedXPath = '';
+    if (selectXPathDiv) {
+      highlightedXPath = selectXPathDiv.textContent.trim();
+    }
+
+    //let highlightedValue;
+
+    // Check if the XPath refers to an attribute
+    if (highlightedXPath.includes('@')) {
+      // Extract attribute name from XPath
+      const attributeName = highlightedXPath.split('@')[1];
+      
+      // Extract the attribute value using a regular expression
+      const attributeRegex = new RegExp(`${attributeName}="([^"]*)"`);
+      const attributeMatch = cleanedContent.match(attributeRegex);
+
+      if (attributeMatch) {
+        highlightedValue = attributeMatch[1]; // Get the attribute value
+      } else {
+        highlightedValue = null; // No attribute value found
+      }
+    } else {
+      // Handle case where XPath refers to element content
+      // Create a temporary DOM element to parse the highlighted content
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = cleanedContent;
+
+      // Extract the text content from the first child element (the main content)
+      const textContent = tempDiv.textContent.trim();
+
+      highlightedValue = textContent;
+    }
+
+    // Log the stored value to confirm
+    console.log('Stored value: ' + highlightedValue);
+
+    // Return the stored value
+    return highlightedValue;
+  } else {
+    console.log('No highlighted element found.');
+    return null;
+  }
+}
+ 
+ 
+
+
+function generateRule() {
+    var selectXPath = document.getElementById('selectXPath').innerText.trim();
+    var btn_copyxpath = document.getElementById('btn_copyxpath');
+    var btn_copyrule = document.getElementById('btn_copyrule');
+    var list_fields = document.getElementById('list_fields');
+  var list_when = document.getElementById('list_when');
+  var list_function = document.getElementById('list_function');
+
+    if (!selectXPath) {
         document.getElementById('outputRule').innerText = '';
-		
-btn_copyrule.disabled = true;
-
-btn_copyxpath.disabled = true;
+        btn_copyrule.disabled = true;
+        btn_copyxpath.disabled = true;
         return;
     }
 
-        var firstLine = selectXPath.split('\n')[0].trim();
+    var firstLine = selectXPath.split('\n')[0].trim();
 
-        // Function to amend the XPath according to the rules
-        function amendXPath(xpath) {
-            return xpath.replace(/(\w+:\w+)(\[\d+\])?/g, (match, p1, p2) => {
-                if (p2) {
-                    return `*[name()='${p1}']${p2}`;
-                } else {
-                    return `*[name()='${p1}']`;
-                }
-            });
-        }
+    // Function to amend the XPath according to the rules
+    function amendXPath(xpath) {
+        return xpath.replace(/(\w+:\w+)(\[\d+\])?/g, (match, p1, p2) => {
+            if (p2) {
+                return `*[name()='${p1}']${p2}`;
+            } else {
+                return `*[name()='${p1}']`;
+            }
+        });
+    }
 
-        var amendedXPath = amendXPath(firstLine);
-        var outputRule = `rule "copy ${firstLine}"
+    var amendedXPath = amendXPath(firstLine);
+    var selectedField = list_fields.value;
+	var selectedWhen = list_when.value;
+	var selectedFunction = list_function.value;
+	
+	var whenLine;
+	var functionLine;
+    var targetField;
+	var ruleName;
+
+    if (selectedField === 'local field') {
+        targetField = 'discovery"."local1';
+    } else if (selectedField === 'resource type') {
+        targetField = 'discovery"."resourceType';
+    } 	else {
+        targetField = `dc"."${selectedField.split(':')[1]}`;
+    }
+	
+	
+	if (selectedWhen === 'true'){
+		whenLine = `##Always run the rule
+    true`
+	} else if (selectedWhen === 'exist'){
+		whenLine = `##Only run when the xpath exists
+    exist "${amendedXPath}"`
+	} else if (selectedWhen === 'equals'){
+		whenLine = `##Only run when xpath value is EQUAL to "${highlightedValue}"
+    "${amendedXPath}" equals "${highlightedValue}"`
+	} else if (selectedWhen === 'starts with'){
+		whenLine = `##Only run when xpath value STARTS with "${highlightedValue}"
+    exist "${amendedXPath}[starts-with(., '${highlightedValue}']"`
+	} else if (selectedWhen === 'contains (case)'){
+		whenLine = `##Only run when xpath value CONTAINS "${highlightedValue}" (case sensitive)
+    exist "${amendedXPath}[contains(., '${highlightedValue}']"`
+	} else if (selectedWhen === 'contains (non-case)'){
+		whenLine = `##Only run when xpath value CONTAINS "${highlightedValue}" (ignore case sensitive)
+    exist "${amendedXPath}[contains(translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'${highlightedValue}')]"`
+	}
+	
+	
+	if (selectedFunction === 'copy'){
+		ruleName = `Copy to ${selectedField}`
+		functionLine = `##Copies value from xpath into ${selectedField}
+    copy "${amendedXPath}" to "${targetField}"`
+	} else if (selectedFunction === 'set value'){
+		ruleName = `Set to ${selectedField}`
+		functionLine = `##Sets a value into ${selectedField}
+    set "insert text here" in "${targetField}"`
+	} else if (selectedFunction === 'set to TEMP'){
+		ruleName = `Set to ${selectedField}`
+		functionLine = `##Assigns the value from xpath into TEMP1 
+    set TEMP"1" to xpath "${amendedXPath}"
+	
+    ##Insert transformation actions below this line
+	
+	
+    ##Assign value from TEMP1 into ${selectedField} 
+    set TEMP"1" in "${targetField}"`
+	} 
+	
+	
+	
+
+   var outputRule = `rule "${ruleName}"
 when
+    ${whenLine}
+then
+    ${functionLine}
+
+end
+    `;
+	
+	
+	
+	
+	
+	document.getElementById('outputRule').innerText = outputRule;
+
+	
+}
+
+
+function generateRule_backup3() {
+    var selectXPath = document.getElementById('selectXPath').innerText.trim();
+    var btn_copyxpath = document.getElementById('btn_copyxpath');
+    var btn_copyrule = document.getElementById('btn_copyrule');
+    var list_fields = document.getElementById('list_fields');
+  var list_when = document.getElementById('list_when');
+
+    if (!selectXPath) {
+        document.getElementById('outputRule').innerText = '';
+        btn_copyrule.disabled = true;
+        btn_copyxpath.disabled = true;
+        return;
+    }
+
+    var firstLine = selectXPath.split('\n')[0].trim();
+
+    // Function to amend the XPath according to the rules
+    function amendXPath(xpath) {
+        return xpath.replace(/(\w+:\w+)(\[\d+\])?/g, (match, p1, p2) => {
+            if (p2) {
+                return `*[name()='${p1}']${p2}`;
+            } else {
+                return `*[name()='${p1}']`;
+            }
+        });
+    }
+
+    var amendedXPath = amendXPath(firstLine);
+    var selectedField = list_fields.value;
+	var selectedWhen = list_when.value;
+    var targetField;
+
+    if (selectedField === 'local field') {
+        targetField = 'discovery"."local1';
+    } else if (selectedField === 'resource type') {
+        targetField = 'discovery"."resourceType';
+    } 	else {
+        targetField = `dc"."${selectedField.split(':')[1]}`;
+    }
+
+   var outputRule = `rule "copy ${firstLine}"
+when
+    #Always run the rule
     true
 then
-    copy "${amendedXPath}" to "dc"."field"
+    #Copies value from xpath into ${selectedField}
+    copy "${amendedXPath}" to "${targetField}"
+
 end
-        `;
-        document.getElementById('outputRule').innerText = outputRule;
-    }
+    `;
+	
+    var outputRule2 = `rule "copy ${firstLine}"
+when
+    #Only run when the xpath exists
+    exist "${amendedXPath}"
+then
+    #Copies value from xpath into ${selectedField}
+    copy "${amendedXPath}" to "${targetField}"
+	
+end
+    `;
+	
+	 var outputRule3 = `rule "copy ${firstLine}"
+when
+    #Only run when the xpath is equal to "${highlightedValue}"
+    "${amendedXPath}" equals "${highlightedValue}"
+then
+    #Copies value from xpath into ${selectedField}
+    copy "${amendedXPath}" to "${targetField}"
+	
+end
+    `;
+	
+	
+	
+	
+	
+	if (selectedWhen === 'true') {
+         document.getElementById('outputRule').innerText = outputRule;
+    } else if (selectedWhen === 'exist') {
+         document.getElementById('outputRule').innerText = outputRule2;
+    } else if (selectedWhen === 'equals') {
+         document.getElementById('outputRule').innerText = outputRule3;
+    } 
+	
+	
+	
+    //document.getElementById('outputRule').innerText = outputRule;
+}
+
 
 
   function copyOutputRule() {
@@ -280,7 +556,18 @@ function enableButtonIfTextareaNotEmpty() {
 function removeNumbersInSquareBrackets() {
     const outputXpathDiv = document.getElementById('outputXPath');
     const spans = outputXpathDiv.querySelectorAll('span.fullxpath');
-    
+    var occnumberON = document.getElementById("occnumberON"); 
+var occnumberOFF = document.getElementById("occnumberOFF"); 
+	
+
+
+    if (occnumberON) {
+        occnumberON.disabled = false;
+    }
+	
+	  if (occnumberOFF) {
+        occnumberOFF.disabled = true;
+    }
     spans.forEach(span => {
         const text = span.textContent;
         const newText = text.replace(/\[\d+\]/g, ''); // Removes numbers within square brackets
@@ -292,6 +579,21 @@ function removeNumbersInSquareBrackets() {
 function replaceXPath() {
     var outputXPath1 = document.querySelectorAll("#outputXPath .fullxpath");
     var outputXPath2 = document.querySelectorAll("#outputXPath2 .fullxpath2");
+
+ var occnumberON = document.getElementById("occnumberON"); 
+var occnumberOFF = document.getElementById("occnumberOFF"); 
+	
+
+
+    if (occnumberON) {
+        occnumberON.disabled = true;
+    }
+	
+	  if (occnumberOFF) {
+        occnumberOFF.disabled = false;
+    }
+
+
 
     if (outputXPath1.length !== outputXPath2.length) {
         console.error("The number of XPaths in the two outputs is different.");
@@ -364,9 +666,9 @@ function enableRecolour() {
         button2.disabled = false;
     }
 	
-	   if (button3) {
-        button3.disabled = false;
-    }
+//	   if (button3) {
+//        button3.disabled = false;
+//    }
 		   if (button4) {
         button4.disabled = false;
     }
@@ -472,7 +774,7 @@ selectXPathDiv.innerHTML += formattedAttributes;
   
 var btn_copyrule = document.getElementById('btn_copyrule');
 btn_copyrule.disabled = false;
-
+getHighlightedValue();
 generateRule();
   
 }
@@ -490,36 +792,128 @@ function addClickEventToSelectXPathDivs() {
 var btn_copyxpath = document.getElementById('btn_copyxpath');
 btn_copyxpath.disabled = false;
       // Generate rule based on the highlighted row
+	   getHighlightedValue();
       generateRuleFromHighlightedRow(this);
+	 
     });
   });
 }
 
+
+
+
 function generateRuleFromHighlightedRow(highlightedDiv) {
-  var selectXPath = highlightedDiv.innerText.trim();
-  var firstLine = selectXPath.split('\n')[0].trim();
+	if (!highlightedDiv) {
+	 generateRule();
+        return;
+    }
+    var selectXPath = highlightedDiv.innerText.trim();
+	
+	 
+	
+    var firstLine = selectXPath.split('\n')[0].trim();
+    var list_fields = document.getElementById('list_fields');
+var list_when = document.getElementById('list_when');
+var list_function = document.getElementById('list_function');
+    // Function to amend the XPath according to the rules
+    function amendXPath(xpath) {
+        return xpath.replace(/(\w+:\w+)(\[\d+\])?/g, (match, p1, p2) => {
+            if (p2) {
+                return `*[name()='${p1}']${p2}`;
+            } else {
+                return `*[name()='${p1}']`;
+            }
+        });
+    }
 
-  // Function to amend the XPath according to the rules
-  function amendXPath(xpath) {
-    return xpath.replace(/(\w+:\w+)(\[\d+\])?/g, (match, p1, p2) => {
-      if (p2) {
-        return `*[name()='${p1}']${p2}`;
-      } else {
-        return `*[name()='${p1}']`;
-      }
-    });
-  }
+    var amendedXPath = amendXPath(firstLine);
+    var selectedField = list_fields.value;
+	var selectedWhen = list_when.value;
+	var selectedFunction = list_function.value;
+	var ruleName;
+	var whenLine;
+	var functionLine;
+    var targetField;
 
-  var amendedXPath = amendXPath(firstLine);
-  var outputRule = `rule "copy ${firstLine}"
+    if (selectedField === 'local field') {
+        targetField = 'discovery"."local1';
+    } else if (selectedField === 'resource type') {
+        targetField = 'discovery"."resourceType';
+    } 	else {
+        targetField = `dc"."${selectedField.split(':')[1]}`;
+    }
+	
+	
+	
+	
+	
+	if (selectedWhen === 'true'){
+		whenLine = `##Always run the rule
+    true`
+	} else if (selectedWhen === 'exist'){
+		whenLine = `##Only run when the xpath exists
+    exist "${amendedXPath}"`
+	} else if (selectedWhen === 'equals'){
+		whenLine = `##Only run when xpath value is EQUAL to "${highlightedValue}"
+    "${amendedXPath}" equals "${highlightedValue}"`
+	} else if (selectedWhen === 'starts with'){
+		whenLine = `##Only run when xpath value STARTS with "${highlightedValue}"
+    exist "${amendedXPath}[starts-with(., '${highlightedValue}']"`
+	} else if (selectedWhen === 'contains (case)'){
+		whenLine = `##Only run when xpath value CONTAINS "${highlightedValue}" (case sensitive)
+    exist "${amendedXPath}[contains(., '${highlightedValue}']"`
+	} else if (selectedWhen === 'contains (non-case)'){
+		whenLine = `##Only run when xpath value CONTAINS "${highlightedValue}" (ignore case sensitive)
+    exist "${amendedXPath}[contains(translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'${highlightedValue}')]"`
+	}
+	
+	
+	if (selectedFunction === 'copy'){
+		ruleName = `Copy to ${selectedField}`
+		functionLine = `##Copies value from xpath into ${selectedField}
+    copy "${amendedXPath}" to "${targetField}"`
+	} else if (selectedFunction === 'set value'){
+		ruleName = `Set to ${selectedField}`
+		functionLine = `##Sets a value into ${selectedField}
+    set "insert text here" in "${targetField}"`
+	} else if (selectedFunction === 'set to TEMP'){
+		ruleName = `Set to ${selectedField}`
+		functionLine = `##Assigns the value from xpath into TEMP1 
+    set TEMP"1" to xpath "${amendedXPath}"
+	
+    ##Insert transformation actions below this line
+	
+	
+    ##Assign value from TEMP1 into ${selectedField} 
+    set TEMP"1" in "${targetField}"`
+	} 
+	
+	
+	
+
+   var outputRule = `rule "${ruleName}"
 when
-    true
+    ${whenLine}
 then
-    copy "${amendedXPath}" to "dc"."field"
+    ${functionLine}
+
 end
-  `;
-  document.getElementById('outputRule').innerText = outputRule;
+    `;
+	
+	
+	
+	
+	
+	
+	
+	
+	document.getElementById('outputRule').innerText = outputRule;
+
+	
 }
+
+
+
 
 
 
@@ -541,11 +935,124 @@ function clearXMLInput() {
   const outputRule = document.getElementById('outputRule');
   outputRule.innerHTML = ''; // Clear the contents of selectXPath
   
+  highlightedValue='';
+  list_when.value='true';
+  list_function.value='copy';
+  list_fields.value='dc:identifier';
   validateXML();
   disableRecolour();
 }
 
-function generateRandomXML() {
+function generateRandomXML3() {
+    const elements = ['title', 'creator', 'subject', 'description', 'date', 'language', 'format', 'publisher', 'identifier', 'contributor', 'coverage', 'relation', 'rights'];
+    const attributes = ['id', 'type', 'role', 'lang', 'scheme', 'value'];
+    const values = ['value1', 'value2', 'value3', 'value4', 'value5'];
+    const getRandomIndex = (arr) => Math.floor(Math.random() * arr.length);
+
+    function generateRandomElement(depth) {
+        if (depth === 0) return '';
+
+        const randomElement = elements[getRandomIndex(elements)];
+        const randomValue = values[getRandomIndex(values)];
+        let randomAttributes = '';
+        const usedAttributes = new Set();
+
+        for (let i = 0; i < Math.floor(Math.random() * 4) + 1; i++) {
+            let randomAttribute;
+            do {
+                randomAttribute = attributes[getRandomIndex(attributes)];
+            } while (usedAttributes.has(randomAttribute));
+            usedAttributes.add(randomAttribute);
+            randomAttributes += ` ${randomAttribute}="${Math.random().toString(36).substring(2, 10)}"`;
+        }
+
+        const randomContent = Math.random() > 0.5 
+            ? randomValue 
+            : generateRandomElement(depth - 1);
+
+        return `<${randomElement}${randomAttributes}>${randomContent}</${randomElement}>`;
+    }
+
+    function generateRandomNestedXML(depth) {
+        let xmlString = '<record>';
+        for (let i = 0; i < Math.floor(Math.random() * 10) + 5; i++) {
+            xmlString += generateRandomElement(depth);
+        }
+        xmlString += '</record>';
+        return xmlString;
+    }
+
+    const randomXML = generateRandomNestedXML(5); // Increase depth for larger XML
+    document.getElementById("xmlInput").value = randomXML;
+    
+    enableButtonIfTextareaNotEmpty();
+}
+
+
+
+function generateRandomXML2() {
+    const titles = ['Analysis of Social Media', 'Advanced Machine Learning', 'Deep Learning Applications'];
+   const creators = [
+        'Moreno, Antonio', 'Iglesias, Carlos A.', 'Smith, John', 'Doe, Jane', 'Johnson, Emily', 
+        'Brown, Michael', 'Davis, Jessica', 'Miller, Christopher', 'Garcia, Daniel', 'Martinez, Maria', 
+        'Rodriguez, Patricia', 'Martinez, Luis', 'Hernandez, Barbara', 'Lopez, Richard', 'Gonzalez, David',
+        'Wilson, Mark', 'Anderson, Susan', 'Thomas, Robert', 'Taylor, Michelle', 'Moore, William'
+    ];
+   const subjects = [
+    'opinion mining', 'affect computing', 'Twitter', 'deep learning', 'machine learning', 
+    'text mining', 'social media', 'cyber-aggression', 'emotion analysis', 'lexicon construction', 
+    'provider networks', 'text feature representation', 'recommender system', 'user preference prediction', 
+    'violence based on sexual orientation', 'semantic networks', 'psychographic segmentation', 
+    'medical web forum', 'gender classification', 'racism', 'sentiment analysis', 'sentiment classification', 
+    'sentiment word analysis', 'social networks', 'convolutional neural network', 'review data mining', 
+    'big data-driven marketing', 'natural language processing', 'data visualization', 'AI ethics', 
+    'robotics', 'computer vision', 'autonomous systems', 'predictive analytics', 'data science', 
+    'cloud computing', 'blockchain', 'cybersecurity', 'quantum computing', 'edge computing', 
+    'internet of things', '5G technology', 'augmented reality', 'virtual reality', 'bioinformatics', 
+    'genomics', 'neural networks', 'computational linguistics', 'speech recognition'
+];
+
+    const descriptions = [
+        'Sentiment analysis is a branch of natural language processing concerned with the study of the intensity of the emotions expressed in a piece of text.',
+        'This book provides advanced knowledge on machine learning techniques and applications.',
+        'A comprehensive guide to deep learning and its applications in various fields.'
+    ];
+    const dates = ['2021-02-12T03:23:14Z', '2020-06-09T16:38:56Z', '2023-05-20T12:00:00Z'];
+    const languages = ['eng', 'fr', 'es'];
+    const formats = ['application/pdf', 'application/epub+zip', 'application/octet-stream'];
+    const publishers = ['MDPI - Multidisciplinary Digital Publishing Institute', 'Springer', 'IEEE'];
+    const identifiers = [
+        '10.3390/books978-3-03928-573-0',
+        '10.1007/springer-978-3-030-45677-1',
+        '10.1109/5.771073'
+    ];
+
+    const getRandomIndex = (arr) => Math.floor(Math.random() * arr.length);
+
+    const randomTitle = titles[getRandomIndex(titles)];
+    const randomCreator1 = creators[getRandomIndex(creators)];
+    const randomCreator2 = creators[getRandomIndex(creators)];
+    const randomSubject1 = subjects[getRandomIndex(subjects)];
+	const randomSubject2 = subjects[getRandomIndex(subjects)];
+	const randomSubject3 = subjects[getRandomIndex(subjects)];
+	const randomSubject4 = subjects[getRandomIndex(subjects)];
+    const randomDescription = descriptions[getRandomIndex(descriptions)];
+    const randomDate = dates[getRandomIndex(dates)];
+    const randomLanguage = languages[getRandomIndex(languages)];
+    const randomFormat = formats[getRandomIndex(formats)];
+    const randomPublisher = publishers[getRandomIndex(publishers)];
+    const randomIdentifier = identifiers[getRandomIndex(identifiers)];
+
+    const xmlString = `<record><header><identifier>oai:directory.doabooks.org:${Math.random().toString(36).substring(2, 10)}</identifier><datestamp>${new Date().toISOString()}</datestamp><setSpec>com_20.500.12854_5</setSpec><setSpec>col_20.500.12854_6</setSpec></header>    <metadata><oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"                    xmlns:doc="http://www.lyncode.com/xoai"                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"                    xmlns:datacite="https://schema.datacite.org/meta/kernel-4.1/metadata.xsd"                    xmlns:oaire="https://raw.githubusercontent.com/rcic/openaire4/master/schemas/4.0/oaire.xsd"                    xmlns:oapen="http://purl.org/dc/elements/1.1/"                    xmlns:publisher="http://purl.org/dc/elements/1.1/"                    xmlns:grantor="http://purl.org/dc/elements/1.1/"                    xmlns:dc="http://purl.org/dc/elements/1.1/"                    xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">             <datacite:title>${randomTitle}</datacite:title>             <datacite:creator>${randomCreator1}</datacite:creator><datacite:creator>${randomCreator2}</datacite:creator><dc:subject>${randomSubject1}</dc:subject><dc:subject>${randomSubject2}</dc:subject><dc:subject>${randomSubject3}</dc:subject><dc:subject>${randomSubject4}</dc:subject><dc:description>${randomDescription}</dc:description><dc:date>${randomDate}</dc:date><datacite:date type="Issued">${new Date().getFullYear()}</datacite:date><dc:identifier>${Math.random().toString(36).substring(2, 10)}</dc:identifier><datacite:identifier type="DOI">${randomIdentifier}</datacite:identifier> <datacite:identifier>${Math.random().toString(36).substring(2, 10)}</datacite:identifier><dc:language>${randomLanguage}</dc:language>             <dc:format>${randomFormat}</dc:format><dc:publisher>${randomPublisher}</dc:publisher>         </oai_dc:dc>     </metadata> </record>`;
+
+    document.getElementById("xmlInput").value = xmlString;
+	
+    enableButtonIfTextareaNotEmpty();
+}
+
+
+
+function generateRandomXML1() {
     const titles = ['Collection Title A', 'Collection Title B', 'Collection Title C'];
     const creators = ['Creator Name X', 'Creator Name Y', 'Creator Name Z'];
     const countries = ['Country A', 'Country B', 'Country C'];
@@ -832,32 +1339,6 @@ function getXPath(node) {
 
 
 
-function getXPath_backup(node) {
-  if (node.nodeType === Node.ELEMENT_NODE) {
-    const element = node;
-    const sameTagSiblings = Array.from(element.parentNode.childNodes)
-      .filter(e => e.tagName === element.tagName && e.nodeType === Node.ELEMENT_NODE);
-
-    const index = sameTagSiblings.indexOf(element) + 1;
-
-    let xpath = '/' + element.tagName.toLowerCase() + '[' + index + ']';
-
-    let parentNode = element.parentNode;
-    while (parentNode !== null && parentNode.nodeType === Node.ELEMENT_NODE) {
-      const sameTagParentSiblings = Array.from(parentNode.parentNode.childNodes)
-        .filter(e => e.tagName === parentNode.tagName && e.nodeType === Node.ELEMENT_NODE);
-      
-      const parentIndex = sameTagParentSiblings.indexOf(parentNode) + 1;
-      xpath = '/' + parentNode.tagName.toLowerCase() + '[' + parentIndex + ']' + xpath;
-      
-      parentNode = parentNode.parentNode;
-    }
-
-    return xpath;
-  }
-  return '';
-}
-
 function highlightXML() {
   const xmlInput = document.getElementById('xmlInput');
   const outputArea = document.getElementById('outputArea');
@@ -1070,11 +1551,11 @@ function validateXML() {
     const dcTags = xmlDoc.getElementsByTagName('dc:title');
     const oaiDcTags = xmlDoc.getElementsByTagName('oai:dc');
 
-    if (dcTags.length > 0 || oaiDcTags.length > 0) {
-        validationMessage.innerText = 'XML Validation: Dublin Core tags detected. Errors may occur.';
-        validationMessage.style.color = 'red'; 
-        return;
-    }
+//    if (dcTags.length > 0 || oaiDcTags.length > 0) {
+//        validationMessage.innerText = 'XML Validation: Dublin Core tags detected. Errors may occur.';
+//        validationMessage.style.color = 'red'; 
+//        return;
+//    }
 
     // Check for self-closing tags
     const selfClosingTags = ['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base'];
