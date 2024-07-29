@@ -13,7 +13,7 @@ body {
 
 }
 .selectxpathdiv.highlighted {
-  background-color: yellow; /* Change this to your preferred highlight color */
+  background-color: #D3D3D3; /* Change this to your preferred highlight color */
 }
 
 
@@ -143,7 +143,7 @@ body {
 <br>
 <div class="container">
 <div class="right-container"><p>
-<b>XML Input:</b><br>
+<b>[1] XML Input:</b><br>
   <textarea id="xmlInput" placeholder="Enter XML code here" oninput="enableButtonIfTextareaNotEmpty()"></textarea>
   </p>
   </div>
@@ -177,18 +177,18 @@ body {
 
 <div class="right-container">
 <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 99%">
-<span style="float: left;"><b>Formatted XML</b> </span><span style="float: right;">Colour: <button id="nocolour" onclick="nocolourTags()" disabled>Remove</button> <button id="recolour" onclick="recolorizeTags()" disabled>Redo</button></span></div>
+<span style="float: left;"><b>[2] Formatted XML</b> </span><span style="float: right;">Colour: <button id="nocolour" onclick="nocolourTags()" disabled>Remove</button> <button id="recolour" onclick="recolorizeTags()" disabled>Redo</button></span></div>
  <div id="outputArea"></div>
  </div>
   
   
   <div class="right-container">
   	<div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%">
-	<span style="float: left;"><b>Xpath List</b></span><span style="float: right;">Occurence: <button id="occnumberON" onclick="replaceXPath()" disabled>On</button><button id="occnumberOFF" onclick="removeNumbersInSquareBrackets()" disabled>Off</button></span>
+	<span style="float: left;"><b>[3] Xpath List</b></span><span style="float: right;">Occurence: <button id="occnumberON" onclick="replaceXPath()" disabled>On</button><button id="occnumberOFF" onclick="removeNumbersInSquareBrackets()" disabled>Off</button></span>
 	</div>
     <div id="outputXPath"></div>
 	<br>
-  <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>Selected Xpath and Attributes</b></span><span style="float: right;"><button id="btn_copyxpath" onclick="copyHighlightedText()" disabled>Copy Highlighted Xpath</button></span></div>
+  <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>[4] Choose an Xpath</b></span><span style="float: right;">Copy to Normalisation Rule: <button id="btn_copyxpathtocondition" onclick="copyxpathtoCondition(document.querySelector('.selectxpathdiv.highlighted'))" disabled>Condition</button> <button id="btn_copyxpathtofunction" onclick="copyxpathtoFunction(document.querySelector('.selectxpathdiv.highlighted'))" disabled>Action</button> &nbsp;|&nbsp;&nbsp;<button id="btn_copyxpath" onclick="copyHighlightedText()" disabled>Copy to Clipboard</button></span></div>
     <div id="selectXPath"></div>
 	
 
@@ -197,18 +197,27 @@ body {
 </div>
 <br>
 <div class="centre-container">
-   <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>XML Normalisation Rule Builder</b></span><span style="float: right;">Condition: <select id="list_when" onchange="generateRuleFromHighlightedRow(document.querySelector('.selectxpathdiv.highlighted'))" class='form-control'>
+   <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>[5] XML Normalisation Rule Builder</b></span><span style="float: right;">Condition: <select id="list_when" onchange="generateRuleFromHighlightedRow()" class='form-control'>
   <option>true</option>
 <option>exist</option>
 <option>equals</option>
 <option>starts with</option> 
 <option>contains (case)</option>
 <option>contains (non-case)</option>
- </select>&nbsp;&nbsp;&nbsp;Function: <select id="list_function" onchange="generateRuleFromHighlightedRow(document.querySelector('.selectxpathdiv.highlighted'))" class='form-control'>
+ </select>&nbsp;&nbsp;&nbsp;[@Attr=Value]: <select id="list_attrvaluecond" onchange="generateRuleFromHighlightedRow()" class='form-control'>
+ 
+  <option>off</option>
+ <option>on</option>
+</select>&nbsp;&nbsp;&nbsp;Action: <select id="list_function" onchange="generateRuleFromHighlightedRow()" class='form-control'>
   <option>copy</option>
+  <option>copy (starts with)</option>
 <option>set value</option>
 <option>set to TEMP</option>
-</select>&nbsp;&nbsp;&nbsp;Target: <select id="list_fields" onchange="generateRuleFromHighlightedRow(document.querySelector('.selectxpathdiv.highlighted'))" class='form-control'>
+</select>&nbsp;&nbsp;&nbsp;[@Attr=Value]: <select id="list_attrvalue" onchange="generateRuleFromHighlightedRow()" class='form-control'>
+ 
+  <option>off</option>
+ <option>on</option>
+</select>&nbsp;&nbsp;&nbsp;Target: <select id="list_fields" onchange="generateRuleFromHighlightedRow()" class='form-control'>
   <option disabled style="font-style:italic">--------</option> 
 <option disabled style="font-style:italic">Dublin Core</option>
 <option disabled style="font-style:italic"></option>
@@ -236,7 +245,7 @@ body {
 
 
 
-</select>&nbsp;&nbsp;&nbsp;<button id="btn_copyrule" onclick="copyOutputRule()" disabled>Copy Nomalisation Rule</button></span></div>
+</select>&nbsp;&nbsp;|&nbsp;&nbsp;<button id="btn_copyrule" onclick="copyOutputRule()" disabled>Copy to Clipboard</button></span></div>
   <div id="outputRule" contenteditable="true" spellcheck="false"></div>
 
 
@@ -248,10 +257,62 @@ body {
 
 
 <script>
- let highlightedValue;
+
+//TEST
+
+ var amendedXPathConditionBackup='Xpath';
+
+ function amendXPathConditionAttr() {
+  // Assuming amendedXPathCondition already has a value
+  
+  // Regular expression to match the XPath with an attribute at the end
+  var attributeRegex = /(.+)\/@([\w:]+)$/;
+
+  // Check if the XPath matches the pattern
+  var match = amendedXPathCondition.match(attributeRegex);
+
+  if (match) {
+    // Construct the amended XPath with the highlightedValue
+    amendedXPathCondition = `${match[1]}[@${match[2]}='</font><font color='orange'>${highlightedValue1}</font><font color='blue'>']`;
+  }
+
+  // The amendedXPathCondition is now updated
+  console.log(amendedXPathCondition);
+  //generateRuleFromHighlightedRow();
+  return amendedXPathCondition;
+}
+ 
+ var amendedXPathFunctionBackup='Xpath';
+ function amendXPathFunctionAttr() {
+	 
+	//amendedXPathFunctionBackup=amendedXPathFunction;
+  // Assuming amendedXPathCondition already has a value
+  
+  // Regular expression to match the XPath with an attribute at the end
+  var attributeRegex = /(.+)\/@([\w:]+)$/;
+
+  // Check if the XPath matches the pattern
+  var match = amendedXPathFunction.match(attributeRegex);
+
+  if (match) {
+    // Construct the amended XPath with the highlightedValue
+    amendedXPathFunction = `${match[1]}[@${match[2]}='</font><font color='orange'>${highlightedValue2}</font><font color='red'>']`;
+  }
+
+  // The amendedXPathCondition is now updated
+  console.log(amendedXPathFunction);
+  //generateRuleFromHighlightedRow();
+  return amendedXPathFunction;
+}
  
  
- function getHighlightedValue() {
+ let highlightedValue1='Xpath Value';
+ let highlightedValue2='Xpath Value';
+ 
+ 
+ 
+ 
+ function getHighlightedValue1() {
   // Get the highlighted line element
   const highlightedLineDiv = document.querySelector('.line.highlighted');
 
@@ -283,9 +344,9 @@ body {
       const attributeMatch = cleanedContent.match(attributeRegex);
 
       if (attributeMatch) {
-        highlightedValue = attributeMatch[1]; // Get the attribute value
+        highlightedValue1 = attributeMatch[1]; // Get the attribute value
       } else {
-        highlightedValue = null; // No attribute value found
+        highlightedValue1 = null; // No attribute value found
       }
     } else {
       // Handle case where XPath refers to element content
@@ -296,20 +357,80 @@ body {
       // Extract the text content from the first child element (the main content)
       const textContent = tempDiv.textContent.trim();
 
-      highlightedValue = textContent;
+      highlightedValue1 = textContent;
     }
 
     // Log the stored value to confirm
-    console.log('Stored value: ' + highlightedValue);
+    console.log('Stored value: ' + highlightedValue1);
 
     // Return the stored value
-    return highlightedValue;
+    return highlightedValue1;
   } else {
     console.log('No highlighted element found.');
     return null;
   }
 }
  
+ 
+
+ function getHighlightedValue2() {
+  // Get the highlighted line element
+  const highlightedLineDiv = document.querySelector('.line.highlighted');
+
+  // Get the highlighted XPath element
+  const selectXPathDiv = document.querySelector('.selectxpathdiv.highlighted');
+
+  if (highlightedLineDiv) {
+    // Find the content within the highlighted element
+    const highlightedContent = highlightedLineDiv.textContent.trim();
+
+    // Use a regular expression to remove leading numbers and spaces
+    const cleanedContent = highlightedContent.replace(/^\d+\s*/, '');
+
+    // Get the XPath from .selectxpathdiv.highlighted
+    let highlightedXPath = '';
+    if (selectXPathDiv) {
+      highlightedXPath = selectXPathDiv.textContent.trim();
+    }
+
+    //let highlightedValue;
+
+    // Check if the XPath refers to an attribute
+    if (highlightedXPath.includes('@')) {
+      // Extract attribute name from XPath
+      const attributeName = highlightedXPath.split('@')[1];
+      
+      // Extract the attribute value using a regular expression
+      const attributeRegex = new RegExp(`${attributeName}="([^"]*)"`);
+      const attributeMatch = cleanedContent.match(attributeRegex);
+
+      if (attributeMatch) {
+        highlightedValue2 = attributeMatch[1]; // Get the attribute value
+      } else {
+        highlightedValue2 = null; // No attribute value found
+      }
+    } else {
+      // Handle case where XPath refers to element content
+      // Create a temporary DOM element to parse the highlighted content
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = cleanedContent;
+
+      // Extract the text content from the first child element (the main content)
+      const textContent = tempDiv.textContent.trim();
+
+      highlightedValue2 = textContent;
+    }
+
+    // Log the stored value to confirm
+    console.log('Stored value: ' + highlightedValue2);
+
+    // Return the stored value
+    return highlightedValue2;
+  } else {
+    console.log('No highlighted element found.');
+    return null;
+  }
+}
  
 
 
@@ -320,7 +441,9 @@ function generateRule() {
     var list_fields = document.getElementById('list_fields');
   var list_when = document.getElementById('list_when');
   var list_function = document.getElementById('list_function');
-
+var selectedField = list_fields.value;
+	var selectedWhen = list_when.value;
+	var selectedFunction = list_function.value;
     if (!selectXPath) {
         document.getElementById('outputRule').innerText = '';
         btn_copyrule.disabled = true;
@@ -341,15 +464,8 @@ function generateRule() {
         });
     }
 
-    var amendedXPath = amendXPath(firstLine);
-    var selectedField = list_fields.value;
-	var selectedWhen = list_when.value;
-	var selectedFunction = list_function.value;
-	
-	var whenLine;
-	var functionLine;
-    var targetField;
-	var ruleName;
+     amendedXPath = amendXPath(firstLine);
+  
 
     if (selectedField === 'local field') {
         targetField = 'discovery"."local1';
@@ -360,46 +476,65 @@ function generateRule() {
     }
 	
 	
+	var btn_copyxpathtocondition = document.getElementById('btn_copyxpathtocondition');
+var btn_copyxpathtofunction = document.getElementById('btn_copyxpathtofunction');
+
+
+		//CONDITION	
 	if (selectedWhen === 'true'){
-		whenLine = `##Always run the rule
+		
+		btn_copyxpathtocondition.disabled = true;
+		whenLine = `<font color="gray"><i>#CONDITION: Always run the rule</i></font>
     true`
 	} else if (selectedWhen === 'exist'){
-		whenLine = `##Only run when the xpath exists
-    exist "${amendedXPath}"`
+		
+		btn_copyxpathtocondition.disabled = false;
+		whenLine = `<font color="gray"><i>#CONDITION: Only run when the xpath exists</i></font>
+    exist "<font color="blue">${amendedXPathCondition}</font>"`
 	} else if (selectedWhen === 'equals'){
-		whenLine = `##Only run when xpath value is EQUAL to "${highlightedValue}"
-    "${amendedXPath}" equals "${highlightedValue}"`
+		btn_copyxpathtocondition.disabled = false;
+		whenLine = `<font color="gray"><i>#CONDITION: Only run when xpath value is EQUAL to "${highlightedValue1}"</i></font>
+    "<font color="blue">${amendedXPathCondition}</font>" equals "<font color="FF8C00">${highlightedValue1}</font>"`
 	} else if (selectedWhen === 'starts with'){
-		whenLine = `##Only run when xpath value STARTS with "${highlightedValue}"
-    exist "${amendedXPath}[starts-with(., '${highlightedValue}']"`
+		btn_copyxpathtocondition.disabled = false;
+		whenLine = `<font color="gray"><i>#CONDITION: Only run when xpath value STARTS with "${highlightedValue1}"</i></font>
+    exist "<font color="blue">${amendedXPathCondition}[starts-with(., '<font color="FF8C00">${highlightedValue1}</font>']</font>"`
 	} else if (selectedWhen === 'contains (case)'){
-		whenLine = `##Only run when xpath value CONTAINS "${highlightedValue}" (case sensitive)
-    exist "${amendedXPath}[contains(., '${highlightedValue}']"`
+		btn_copyxpathtocondition.disabled = false;
+		whenLine = `<font color="gray"><i>#CONDITION: Only run when xpath value CONTAINS "${highlightedValue1}" (case sensitive)</i></font>
+    exist "<font color="blue">${amendedXPathCondition}[contains(., '<font color="FF8C00">${highlightedValue1}</font>']</font>"`
 	} else if (selectedWhen === 'contains (non-case)'){
-		whenLine = `##Only run when xpath value CONTAINS "${highlightedValue}" (ignore case sensitive)
-    exist "${amendedXPath}[contains(translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'${highlightedValue}')]"`
+		btn_copyxpathtocondition.disabled = false;
+		whenLine = `<font color="gray"><i>#CONDITION: Only run when xpath value CONTAINS "${highlightedValue}" (ignore case sensitive)</i></font>
+    exist "<font color="blue">${amendedXPathCondition}[contains(translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'<font color="FF8C00">${highlightedValue1}</font>')]</font>"`
 	}
 	
 	
+	//ACTION
 	if (selectedFunction === 'copy'){
+		btn_copyxpathtofunction.disabled = false;
 		ruleName = `Copy to ${selectedField}`
-		functionLine = `##Copies value from xpath into ${selectedField}
-    copy "${amendedXPath}" to "${targetField}"`
+		functionLine = `<font color="gray"><i>#ACTION: Copies value from xpath into ${selectedField}</i></font>
+    copy "<font color="red">${amendedXPathFunction}</font>" to "<font color="purple">${targetField}</font>"`
 	} else if (selectedFunction === 'set value'){
+		btn_copyxpathtofunction.disabled = true;
 		ruleName = `Set to ${selectedField}`
-		functionLine = `##Sets a value into ${selectedField}
-    set "insert text here" in "${targetField}"`
+		functionLine = `<font color="gray"><i>#ACTION: Sets a value into ${selectedField}</i></font>
+    set "insert text here" in "<font color="purple">${targetField}"`
 	} else if (selectedFunction === 'set to TEMP'){
+		btn_copyxpathtofunction.disabled = false;
 		ruleName = `Set to ${selectedField}`
-		functionLine = `##Assigns the value from xpath into TEMP1 
-    set TEMP"1" to xpath "${amendedXPath}"
+		functionLine = `<font color="gray"><i>#ACTION: Assigns xpath value into TEMP1</i></font> 
+    set TEMP"1" to xpath "<font color="red">${amendedXPathFunction}</font>"
 	
-    ##Insert transformation actions below this line
+    <font color="gray"><i>##Insert transformation actions below this line</i></font>
 	
 	
-    ##Assign value from TEMP1 into ${selectedField} 
-    set TEMP"1" in "${targetField}"`
+    <font color="gray"><i>#ACTION: Assign value from TEMP1 into ${selectedField}</i></font> 
+    set TEMP"1" in "<font color="purple">${targetField}</font>"`
 	} 
+	
+	
 	
 	
 	
@@ -413,105 +548,23 @@ then
 end
     `;
 	
+	 const highlightedDiv = document.querySelector('.selectxpathdiv.highlighted');
+ 
+	 if (!highlightedDiv) {
+		 
+		 btn_copyxpathtocondition.disabled = true;
+		 btn_copyxpathtofunction.disabled = true;
+	 }
 	
 	
 	
 	
-	document.getElementById('outputRule').innerText = outputRule;
+	
+	document.getElementById('outputRule').innerHTML = outputRule;
 
 	
 }
 
-
-function generateRule_backup3() {
-    var selectXPath = document.getElementById('selectXPath').innerText.trim();
-    var btn_copyxpath = document.getElementById('btn_copyxpath');
-    var btn_copyrule = document.getElementById('btn_copyrule');
-    var list_fields = document.getElementById('list_fields');
-  var list_when = document.getElementById('list_when');
-
-    if (!selectXPath) {
-        document.getElementById('outputRule').innerText = '';
-        btn_copyrule.disabled = true;
-        btn_copyxpath.disabled = true;
-        return;
-    }
-
-    var firstLine = selectXPath.split('\n')[0].trim();
-
-    // Function to amend the XPath according to the rules
-    function amendXPath(xpath) {
-        return xpath.replace(/(\w+:\w+)(\[\d+\])?/g, (match, p1, p2) => {
-            if (p2) {
-                return `*[name()='${p1}']${p2}`;
-            } else {
-                return `*[name()='${p1}']`;
-            }
-        });
-    }
-
-    var amendedXPath = amendXPath(firstLine);
-    var selectedField = list_fields.value;
-	var selectedWhen = list_when.value;
-    var targetField;
-
-    if (selectedField === 'local field') {
-        targetField = 'discovery"."local1';
-    } else if (selectedField === 'resource type') {
-        targetField = 'discovery"."resourceType';
-    } 	else {
-        targetField = `dc"."${selectedField.split(':')[1]}`;
-    }
-
-   var outputRule = `rule "copy ${firstLine}"
-when
-    #Always run the rule
-    true
-then
-    #Copies value from xpath into ${selectedField}
-    copy "${amendedXPath}" to "${targetField}"
-
-end
-    `;
-	
-    var outputRule2 = `rule "copy ${firstLine}"
-when
-    #Only run when the xpath exists
-    exist "${amendedXPath}"
-then
-    #Copies value from xpath into ${selectedField}
-    copy "${amendedXPath}" to "${targetField}"
-	
-end
-    `;
-	
-	 var outputRule3 = `rule "copy ${firstLine}"
-when
-    #Only run when the xpath is equal to "${highlightedValue}"
-    "${amendedXPath}" equals "${highlightedValue}"
-then
-    #Copies value from xpath into ${selectedField}
-    copy "${amendedXPath}" to "${targetField}"
-	
-end
-    `;
-	
-	
-	
-	
-	
-	if (selectedWhen === 'true') {
-         document.getElementById('outputRule').innerText = outputRule;
-    } else if (selectedWhen === 'exist') {
-         document.getElementById('outputRule').innerText = outputRule2;
-    } else if (selectedWhen === 'equals') {
-         document.getElementById('outputRule').innerText = outputRule3;
-    } 
-	
-	
-	
-    //document.getElementById('outputRule').innerText = outputRule;
-}
 
 
 
@@ -746,6 +799,7 @@ function extractContent() {
 			  const formattedAttributes = attributeNames.map(attr => `${prefix}${fullXPath}/@${attr.slice(0, -1)}${suffix}`).join('');
 selectXPathDiv.innerHTML += formattedAttributes;
 			 console.log("423");
+			 console.log(formattedAttributes);
 
           } else {
             selectXPathDiv.innerHTML += prefix + suffix;
@@ -763,7 +817,7 @@ selectXPathDiv.innerHTML += formattedAttributes;
 
       }
     } else {
-      selectXPathDiv.innerHTML = '';
+      //selectXPathDiv.innerHTML = '';
 	 console.log("442");
 
     }
@@ -774,7 +828,7 @@ selectXPathDiv.innerHTML += formattedAttributes;
   
 var btn_copyrule = document.getElementById('btn_copyrule');
 btn_copyrule.disabled = false;
-getHighlightedValue();
+//getHighlightedValue();
 generateRule();
   
 }
@@ -788,12 +842,17 @@ function addClickEventToSelectXPathDivs() {
       // Add highlight to the clicked selectXPathDiv
       this.classList.add('highlighted');
 	  
-	  
+	  //xyz
 var btn_copyxpath = document.getElementById('btn_copyxpath');
+
+var btn_copyxpathtofunction = document.getElementById('btn_copyxpathtofunction');
+var btn_copyxpathtocondition = document.getElementById('btn_copyxpathtocondition');
 btn_copyxpath.disabled = false;
+btn_copyxpathtocondition.disabled = false;
+btn_copyxpathtofunction.disabled = false;
       // Generate rule based on the highlighted row
-	   getHighlightedValue();
-      generateRuleFromHighlightedRow(this);
+	   
+      generateRuleFromHighlightedRow();
 	 
     });
   });
@@ -801,22 +860,21 @@ btn_copyxpath.disabled = false;
 
 
 
+  
+	var ruleName;
+	var whenLine;
+	var functionLine;
+    var targetField;
+	var amendedXPath;
+var amendedXPathFunction='Xpath';
+var amendedXPathCondition='Xpath';
 
-function generateRuleFromHighlightedRow(highlightedDiv) {
-	if (!highlightedDiv) {
-	 generateRule();
-        return;
-    }
-    var selectXPath = highlightedDiv.innerText.trim();
-	
-	 
-	
-    var firstLine = selectXPath.split('\n')[0].trim();
-    var list_fields = document.getElementById('list_fields');
-var list_when = document.getElementById('list_when');
-var list_function = document.getElementById('list_function');
-    // Function to amend the XPath according to the rules
-    function amendXPath(xpath) {
+
+function copyxpathtoCondition(highlightedDiv){
+	getHighlightedValue1();
+	var selectXPath = highlightedDiv.innerText.trim();
+	var firstLine = selectXPath.split('\n')[0].trim();
+	    function amendXPath(xpath) {
         return xpath.replace(/(\w+:\w+)(\[\d+\])?/g, (match, p1, p2) => {
             if (p2) {
                 return `*[name()='${p1}']${p2}`;
@@ -826,14 +884,48 @@ var list_function = document.getElementById('list_function');
         });
     }
 
-    var amendedXPath = amendXPath(firstLine);
-    var selectedField = list_fields.value;
+amendedXPathCondition = amendXPath(firstLine);
+amendedXPathConditionBackup = amendedXPathCondition;
+generateRuleFromHighlightedRow();	
+}
+
+
+function copyxpathtoFunction(highlightedDiv){
+	getHighlightedValue2();
+	var selectXPath = highlightedDiv.innerText.trim();
+	var firstLine = selectXPath.split('\n')[0].trim();
+	    function amendXPath(xpath) {
+        return xpath.replace(/(\w+:\w+)(\[\d+\])?/g, (match, p1, p2) => {
+            if (p2) {
+                return `*[name()='${p1}']${p2}`;
+            } else {
+                return `*[name()='${p1}']`;
+            }
+        });
+    }
+
+amendedXPathFunction = amendXPath(firstLine);
+amendedXPathFunctionBackup = amendedXPathFunction;
+
+	
+		
+	generateRuleFromHighlightedRow();	
+}
+
+var AttributeValueText ='';
+
+function generateRuleFromHighlightedRow() {
+	
+   //console
+   console.log("generateRuleFromHighlightedRow");
+    var list_fields = document.getElementById('list_fields');
+var list_when = document.getElementById('list_when');
+var list_function = document.getElementById('list_function');
+    // Function to amend the XPath according to the rules
+ 
+  var selectedField = list_fields.value;
 	var selectedWhen = list_when.value;
 	var selectedFunction = list_function.value;
-	var ruleName;
-	var whenLine;
-	var functionLine;
-    var targetField;
 
     if (selectedField === 'local field') {
         targetField = 'discovery"."local1';
@@ -844,49 +936,93 @@ var list_function = document.getElementById('list_function');
     }
 	
 	
+	var btn_copyxpathtocondition = document.getElementById('btn_copyxpathtocondition');
+var btn_copyxpathtofunction = document.getElementById('btn_copyxpathtofunction');
+
+
+	//asdfg
+	var selectedAttrValueCond = list_attrvaluecond.value;
+	var selectedAttrValue = list_attrvalue.value;
 	
-	
-	
-	if (selectedWhen === 'true'){
-		whenLine = `##Always run the rule
-    true`
-	} else if (selectedWhen === 'exist'){
-		whenLine = `##Only run when the xpath exists
-    exist "${amendedXPath}"`
-	} else if (selectedWhen === 'equals'){
-		whenLine = `##Only run when xpath value is EQUAL to "${highlightedValue}"
-    "${amendedXPath}" equals "${highlightedValue}"`
-	} else if (selectedWhen === 'starts with'){
-		whenLine = `##Only run when xpath value STARTS with "${highlightedValue}"
-    exist "${amendedXPath}[starts-with(., '${highlightedValue}']"`
-	} else if (selectedWhen === 'contains (case)'){
-		whenLine = `##Only run when xpath value CONTAINS "${highlightedValue}" (case sensitive)
-    exist "${amendedXPath}[contains(., '${highlightedValue}']"`
-	} else if (selectedWhen === 'contains (non-case)'){
-		whenLine = `##Only run when xpath value CONTAINS "${highlightedValue}" (ignore case sensitive)
-    exist "${amendedXPath}[contains(translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'${highlightedValue}')]"`
+	if (selectedAttrValue === 'on'){
+	amendXPathFunctionAttr();
+	AttributeValueText = `, only if attribute value EQUALS "${highlightedValue2}"`;
+	}  else if (selectedAttrValue === 'off'){
+		amendedXPathFunction=amendedXPathFunctionBackup;
+		AttributeValueText ='';
 	}
 	
 	
+		if (selectedAttrValueCond === 'on'){
+	amendXPathConditionAttr();
+	//AttributeValueText = `, only if attribute value EQUALS "${highlightedValue2}"`;
+	}  else if (selectedAttrValueCond === 'off'){
+		amendedXPathCondition=amendedXPathConditionBackup;
+		//AttributeValueText ='';
+	}
+	
+	
+	
+	//CONDITION	
+	if (selectedWhen === 'true'){
+		
+		btn_copyxpathtocondition.disabled = true;
+		whenLine = `<font color="gray"><i>#CONDITION: Always run the rule</i></font>
+    true`
+	} else if (selectedWhen === 'exist'){
+		
+		btn_copyxpathtocondition.disabled = false;
+		whenLine = `<font color="gray"><i>#CONDITION: Only run when the xpath exists</i></font>
+    exist "<font color="blue">${amendedXPathCondition}</font>"`
+	} else if (selectedWhen === 'equals'){
+		btn_copyxpathtocondition.disabled = false;
+		whenLine = `<font color="gray"><i>#CONDITION: Only run when xpath value is EQUAL to "${highlightedValue1}"</i></font>
+    "<font color="blue">${amendedXPathCondition}</font>" equals "<font color="FF8C00"><font color="FF8C00">${highlightedValue1}</font></font>"`
+	} else if (selectedWhen === 'starts with'){
+		btn_copyxpathtocondition.disabled = false;
+		whenLine = `<font color="gray"><i>#CONDITION: Only run when xpath value STARTS with "${highlightedValue1}"</i></font>
+    exist "<font color="blue">${amendedXPathCondition}[starts-with(., '<font color="FF8C00">${highlightedValue1}</font>']</font>"`
+	} else if (selectedWhen === 'contains (case)'){
+		btn_copyxpathtocondition.disabled = false;
+		whenLine = `<font color="blue"><i>#CONDITION: Only run when xpath value CONTAINS "${highlightedValue}" (case sensitive)</i></font>
+    exist "<font color="blue">${amendedXPathCondition}[contains(., '<font color="FF8C00">${highlightedValue1}</font>']</font>"`
+	} else if (selectedWhen === 'contains (non-case)'){
+		btn_copyxpathtocondition.disabled = false;
+		whenLine = `<font color="gray"><i>#CONDITION: Only run when xpath value CONTAINS "${highlightedValue1}" (ignore case sensitive)</i></font>
+    exist "<font color="blue">${amendedXPathCondition}[contains(translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'<font color="FF8C00">${highlightedValue1}</font>')]</font>"`
+	}
+	
+	
+	//ACTION
 	if (selectedFunction === 'copy'){
+		btn_copyxpathtofunction.disabled = false;
 		ruleName = `Copy to ${selectedField}`
-		functionLine = `##Copies value from xpath into ${selectedField}
-    copy "${amendedXPath}" to "${targetField}"`
+		functionLine = `<font color="gray"><i>#ACTION: Copies value from xpath into ${selectedField}${AttributeValueText}</i></font>
+    copy "<font color="red">${amendedXPathFunction}</font>" to "<font color="purple">${targetField}</font>"`
+	} else 	if (selectedFunction === 'copy (starts with)'){
+		btn_copyxpathtofunction.disabled = false;
+		ruleName = `Copy to ${selectedField}`
+		functionLine = `<font color="gray"><i>#ACTION: If xpath value starts with '${highlightedValue2}' then copy into ${selectedField}${AttributeValueText}</i></font>
+    copy "<font color="red">${amendedXPathFunction}[starts-with(., '<font color="FF8C00">${highlightedValue2}</font>']</font>" to "<font color="purple">${targetField}</font>"`
 	} else if (selectedFunction === 'set value'){
+		btn_copyxpathtofunction.disabled = true;
 		ruleName = `Set to ${selectedField}`
-		functionLine = `##Sets a value into ${selectedField}
-    set "insert text here" in "${targetField}"`
+		functionLine = `<font color="gray"><i>#ACTION: Sets a value into ${selectedField}${AttributeValueText}</i></font>
+    set "insert text here" in "<font color="purple">${targetField}"`
 	} else if (selectedFunction === 'set to TEMP'){
+		btn_copyxpathtofunction.disabled = false;
 		ruleName = `Set to ${selectedField}`
-		functionLine = `##Assigns the value from xpath into TEMP1 
-    set TEMP"1" to xpath "${amendedXPath}"
+		functionLine = `<font color="gray"><i>#ACTION: Assigns xpath value into TEMP1${AttributeValueText}</i></font> 
+    set TEMP"1" to xpath "<font color="red">${amendedXPathFunction}</font>"
 	
-    ##Insert transformation actions below this line
+    <font color="gray"><i>##Insert transformation actions below this line</i></font>
 	
 	
-    ##Assign value from TEMP1 into ${selectedField} 
-    set TEMP"1" in "${targetField}"`
+    <font color="gray"><i>#ACTION: Assign value from TEMP1 into ${selectedField}</i></font> 
+    set TEMP"1" in "<font color="purple">${targetField}</font>"`
 	} 
+	
+	
 	
 	
 	
@@ -901,13 +1037,19 @@ end
     `;
 	
 	
+	 const highlightedDiv = document.querySelector('.selectxpathdiv.highlighted');
+ 
+	 if (!highlightedDiv) {
+		 
+		 btn_copyxpathtocondition.disabled = true;
+		 btn_copyxpathtofunction.disabled = true;
+	 }
 	
 	
 	
 	
 	
-	
-	document.getElementById('outputRule').innerText = outputRule;
+	document.getElementById('outputRule').innerHTML = outputRule;
 
 	
 }
