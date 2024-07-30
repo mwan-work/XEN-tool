@@ -843,7 +843,8 @@ function extractContent() {
   var btn_copyrule = document.getElementById('btn_copyrule');
   btn_copyrule.disabled = false;
   // getHighlightedValue();
-  generateRule();
+  //generateRule();
+  generateRuleFromHighlightedRow();
 }
 
 
@@ -961,10 +962,15 @@ function copyxpathtoCondition(highlightedDiv){
             }
         });
     }
+AttributeValueTextcondition='';
+
+copyfunction=false;
+	copycondition=true;
 
 amendedXPathCondition = amendXPath(firstLine);
 amendedXPathConditionBackup = amendedXPathCondition;
 generateRuleFromHighlightedRow();	
+
 }
 
 
@@ -982,15 +988,25 @@ function copyxpathtoFunction(highlightedDiv){
         });
     }
 
+
+copyfunction=true;
+	copycondition=false;
+AttributeValueTextfunction='';
 amendedXPathFunction = amendXPath(firstLine);
 amendedXPathFunctionBackup = amendedXPathFunction;
 
 	
 		
-	generateRuleFromHighlightedRow();	
+	generateRuleFromHighlightedRow();
+
+	
 }
 
-var AttributeValueText ='';
+var AttributeValueTextfunction ='';
+var AttributeValueTextcondition ='';
+//var AttributeValue ='';
+var copyfunction=false;
+var copycondition=false;
 
 function generateRuleFromHighlightedRow() {
 	
@@ -1023,7 +1039,24 @@ var btn_copyxpathtofunction = document.getElementById('btn_copyxpathtofunction')
 	if (amendedXPathFunction.includes("[@")) {
     // Replace "[@" with "[<font color="orange">@"
     //amendedXPathFunction = amendedXPathFunction.replace("[@", "[<font color=\"orange\">@");
-
+  const attributeValueMatchfunction = amendedXPathFunction.match(/@\w+='[^']*'/);
+    
+	let attributeValuefunction = '';
+	
+    if (attributeValueMatchfunction) {
+        attributeValuefunction = attributeValueMatchfunction[0];
+		attributeValuefunction = attributeValuefunction.replace(/<font color="orange">|<\/font>/g, '');
+		
+		
+		
+		if(copyfunction){
+			
+		AttributeValueTextfunction=`, only when attribute ${attributeValuefunction} exists`;
+		}  
+		
+			
+		
+    }
 
    // Replace the last instance of "='" with "='<font color=\"orange\""
     const lastEqualSingleQuoteIndex = amendedXPathFunction.lastIndexOf("='");
@@ -1047,6 +1080,29 @@ var btn_copyxpathtofunction = document.getElementById('btn_copyxpathtofunction')
 
 	if (amendedXPathCondition.includes("[@")) {
    
+const attributeValueMatchCondition = amendedXPathCondition.match(/@\w+='[^']*'/);
+    let attributeValue = '';
+	
+let attributeValuecondition = '';
+//AttributeValueTextcondition = '';
+    if (attributeValueMatchCondition) {
+        attributeValuecondition = attributeValueMatchCondition[0];
+		attributeValuecondition = attributeValuecondition.replace(/<font color="orange">|<\/font>/g, '');
+		
+			  
+		
+			
+		
+    }
+
+
+if (copycondition){
+			
+		AttributeValueTextcondition=`, and when attribute ${attributeValuecondition} exists`;
+		
+		
+		}	
+
 
    // Replace the last instance of "='" with "='<font color=\"orange\""
     const lastEqualSingleQuoteIndex = amendedXPathCondition.lastIndexOf("='");
@@ -1079,23 +1135,23 @@ var btn_copyxpathtofunction = document.getElementById('btn_copyxpathtofunction')
 	} else if (selectedWhen === 'exist'){
 		
 		btn_copyxpathtocondition.disabled = false;
-		whenLine = `<font color="gray"><i>#CONDITION: Only run when the xpath exists</i></font>
+		whenLine = `<font color="gray"><i>#CONDITION: Run when the xpath exists${AttributeValueTextcondition}.</i></font>
     exist "<font color="blue">${amendedXPathCondition}</font>"`
 	} else if (selectedWhen === 'equals'){
 		btn_copyxpathtocondition.disabled = false;
-		whenLine = `<font color="gray"><i>#CONDITION: Only run when xpath value is EQUAL to "${highlightedValue1}"</i></font>
+		whenLine = `<font color="gray"><i>#CONDITION: Run when xpath value is EQUAL to "${highlightedValue1}"${AttributeValueTextcondition}.</i></font>
     "<font color="blue">${amendedXPathCondition}</font>" equals "<font color="FF8C00"><font color="FF8C00">${highlightedValue1}</font></font>"`
 	} else if (selectedWhen === 'starts with'){
 		btn_copyxpathtocondition.disabled = false;
-		whenLine = `<font color="gray"><i>#CONDITION: Only run when xpath value STARTS with "${highlightedValue1}"</i></font>
+		whenLine = `<font color="gray"><i>#CONDITION: Run when xpath value STARTS with "${highlightedValue1}"${AttributeValueTextcondition}.</i></font>
     exist "<font color="blue">${amendedXPathCondition}[starts-with(., '<font color="FF8C00">${highlightedValue1}</font>']</font>"`
 	} else if (selectedWhen === 'contains (case)'){
 		btn_copyxpathtocondition.disabled = false;
-		whenLine = `<font color="blue"><i>#CONDITION: Only run when xpath value CONTAINS "${highlightedValue1}" (case sensitive)</i></font>
+		whenLine = `<font color="gray"><i>#CONDITION: Run when xpath value CONTAINS "${highlightedValue1}" (case sensitive)${AttributeValueTextcondition}.</i></font>
     exist "<font color="blue">${amendedXPathCondition}[contains(., '<font color="FF8C00">${highlightedValue1}</font>']</font>"`
 	} else if (selectedWhen === 'contains (non-case)'){
 		btn_copyxpathtocondition.disabled = false;
-		whenLine = `<font color="gray"><i>#CONDITION: Only run when xpath value CONTAINS "${highlightedValue1}" (ignore case sensitive)</i></font>
+		whenLine = `<font color="gray"><i>#CONDITION: Run when xpath value CONTAINS "${highlightedValue1}" (ignore case sensitive)${AttributeValueTextcondition}.</i></font>
     exist "<font color="blue">${amendedXPathCondition}[contains(translate(text(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'<font color="FF8C00">${highlightedValue1}</font>')]</font>"`
 	}
 	
@@ -1104,22 +1160,22 @@ var btn_copyxpathtofunction = document.getElementById('btn_copyxpathtofunction')
 	if (selectedFunction === 'copy'){
 		btn_copyxpathtofunction.disabled = false;
 		ruleName = `Copy to ${selectedField}`
-		functionLine = `<font color="gray"><i>#ACTION: Copies value from xpath into ${selectedField}${AttributeValueText}</i></font>
+		functionLine = `<font color="gray"><i>#ACTION: Copies value from xpath into ${selectedField}${AttributeValueTextfunction}.</i></font>
     copy "<font color="red">${amendedXPathFunction}</font>" to "<font color="purple">${targetField}</font>"`
 	} else 	if (selectedFunction === 'copy (starts with)'){
 		btn_copyxpathtofunction.disabled = false;
 		ruleName = `Copy to ${selectedField}`
-		functionLine = `<font color="gray"><i>#ACTION: If xpath value starts with '${highlightedValue2}' then copy into ${selectedField}${AttributeValueText}</i></font>
+		functionLine = `<font color="gray"><i>#ACTION: If xpath value starts with '${highlightedValue2}' then copy into ${selectedField}${AttributeValueTextfunction}.</i></font>
     copy "<font color="red">${amendedXPathFunction}[starts-with(., '<font color="FF8C00">${highlightedValue2}</font>']</font>" to "<font color="purple">${targetField}</font>"`
 	} else if (selectedFunction === 'set value'){
 		btn_copyxpathtofunction.disabled = true;
 		ruleName = `Set to ${selectedField}`
-		functionLine = `<font color="gray"><i>#ACTION: Sets a value into ${selectedField}${AttributeValueText}</i></font>
+		functionLine = `<font color="gray"><i>#ACTION: Sets a value into ${selectedField}${AttributeValueTextfunction}.</i></font>
     set "<font color="red">Insert custom text here</font>" in "<font color="purple">${targetField}"`
 	} else if (selectedFunction === 'set to TEMP'){
 		btn_copyxpathtofunction.disabled = false;
 		ruleName = `Set to ${selectedField}`
-		functionLine = `<font color="gray"><i>#ACTION: Assigns xpath value into TEMP1${AttributeValueText}</i></font> 
+		functionLine = `<font color="gray"><i>#ACTION: Assign xpath value into TEMP1${AttributeValueTextfunction}.</i></font> 
     set TEMP"1" to xpath "<font color="red">${amendedXPathFunction}</font>"
 	
     <font color="gray"><i>##Insert transformation actions below this line</i></font>
@@ -1158,7 +1214,8 @@ end
 	
 	document.getElementById('outputRule').innerHTML = outputRule;
 
-	
+	copyfunction=false;
+	copycondition=false;
 }
 
 
