@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>XML Tool</title>
+  <title>XEN Tool</title>
   
   <style>
 body {
@@ -137,14 +137,14 @@ body {
   </style>
 </head>
 <body>
-<div id="topbanner"><font size=12>XML TOOL</font><br>
-<font size=4>Xpath Extraction and XML Normalisation Rule Builder</font>
+<div id="topbanner"><font size=12>Xpath Extraction and Normalization tool </font><br>
+<font size=4>for ExLibris Primo VE</font>
 </div>
 <br>
 <div class="container">
 <div class="right-container"><p>
-<b>[1] XML Input:</b><br>
-  <textarea id="xmlInput" placeholder="Enter XML code here" oninput="enableButtonIfTextareaNotEmpty()"></textarea>
+<b>[1] XML Record:</b><br>
+  <textarea id="xmlInput" placeholder="Enter XML record here" oninput="enableButtonIfTextareaNotEmpty()"></textarea>
   </p>
   </div>
   <div class="right-container">
@@ -153,7 +153,7 @@ body {
   1) XML record goes into the <b>[XML Input]</b> box on the left.<br>
   2) Click the <b>[Format XML and Extract XPath]</b> button.<br>
   3) Select an element in <b>[Formatted XML]</b> to show the XPath.<br>
-  4) Create an XML normalisation rule using the <b>[XML Normalisation Rule Builder]</b>.
+  4) Create an XML normalization rule using the <b>[XML Normalization Rule Builder]</b>.
   </p>
   <p>Test with random record:<br>  
   
@@ -188,7 +188,9 @@ body {
 	</div>
     <div id="outputXPath"></div>
 	<br>
-  <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>[4] Choose an Xpath</b></span><span style="float: right;">Copy to Normalisation Rule: <button id="btn_copyxpathtocondition" onclick="copyxpathtoCondition(document.querySelector('.selectxpathdiv.highlighted'))" disabled>Condition</button> <button id="btn_copyxpathtofunction" onclick="copyxpathtoFunction(document.querySelector('.selectxpathdiv.highlighted'))" disabled>Action</button> &nbsp;|&nbsp;&nbsp;<button id="btn_copyxpath" onclick="copyHighlightedText()" disabled>Copy to Clipboard</button></span></div>
+  <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>[4] Choose an Xpath</b></span><span style="float: right;">Copy to Normalization Rule: <button id="btn_copyxpathtocondition" onclick="copyxpathtoCondition(document.querySelector('.selectxpathdiv.highlighted'))" disabled><font color="blue">&#9632;</font>
+Condition</button> <button id="btn_copyxpathtofunction" onclick="copyxpathtoFunction(document.querySelector('.selectxpathdiv.highlighted'))" disabled><font color="red">&#9650;</font>
+Action</button> &nbsp;|&nbsp;&nbsp;<button id="btn_copyxpath" onclick="copyHighlightedText()" disabled>Copy to Clipboard</button></span></div>
     <div id="selectXPath"></div>
 	
 
@@ -197,7 +199,7 @@ body {
 </div>
 <br>
 <div class="centre-container">
-   <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>[5] XML Normalisation Rule Builder</b></span><span style="float: right;">Condition: <select id="list_when" onchange="generateRuleFromHighlightedRow()" class='form-control'>
+   <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>[5] XML Normalization Rule Builder</b></span><span style="float: right;">Condition: <select id="list_when" onchange="generateRuleFromHighlightedRow()" class='form-control'>
   <option>true</option>
 <option>exist</option>
 <option>equals</option>
@@ -797,6 +799,76 @@ function extractContent() {
       const prefix = '<div class="selectxpathdiv"><span class="selectxpathspan">';
       const suffix = '</span></div>';
       
+      // Initialize arrays for different types of XPaths
+      let attributeXPaths = [];
+      let predicateXPaths = [];
+      
+      // Add the base XPath
+      attributeXPaths.push(`${prefix}${fullXPath}${suffix}`);
+      
+      const highlightedLineDiv = outputAreaDiv.querySelector('.line.highlighted');
+
+      if (highlightedLineDiv && highlightedLineDiv.innerHTML.trim() !== '') {
+        const tagSpan = highlightedLineDiv.querySelector('.tag');
+
+        if (tagSpan) {
+          const tagContent = tagSpan.textContent;
+          const attributeRegex = /(\w+)="([^"]*)"/g;
+          let match;
+          
+          // Find all attributes and their values
+          while ((match = attributeRegex.exec(tagContent)) !== null) {
+            const attrName = match[1];
+            const attrValue = match[2];
+
+            // XPath with attribute values
+            attributeXPaths.push(`${prefix}${fullXPath}/@${attrName}${suffix}`);
+            // XPath with attribute predicates
+            predicateXPaths.push(`${prefix}${fullXPath}[@${attrName}='${attrValue}']${suffix}`);
+          }
+          
+          // Combine arrays to get the desired order
+          const formattedXPaths = attributeXPaths.concat(predicateXPaths);
+          selectXPathDiv.innerHTML = formattedXPaths.join('');
+          console.log("Formatted XPaths:");
+          //console.log(formattedXPaths);
+        } else {
+          selectXPathDiv.innerHTML += prefix + 'No tag span found.' + suffix;
+          console.log("No tag span found.");
+        }
+      } else {
+        selectXPathDiv.innerHTML += prefix + 'No content found.' + suffix;
+        console.log("No content found.");
+      }
+    } else {
+      selectXPathDiv.innerHTML = '';
+      console.log("No fullXPath found.");
+    }
+  }
+  addClickEventToSelectXPathDivs();
+  
+  var btn_copyrule = document.getElementById('btn_copyrule');
+  btn_copyrule.disabled = false;
+  // getHighlightedValue();
+  //generateRule();
+  generateRuleFromHighlightedRow();
+}
+
+
+
+function extractContent_backup2() {
+  const outputXPathDiv = document.getElementById('outputXPath');
+  const selectXPathDiv = document.getElementById('selectXPath');
+  const outputAreaDiv = document.getElementById('outputArea');
+  
+  if (outputXPathDiv && selectXPathDiv && outputAreaDiv) {
+    const fullXPathSpan = outputXPathDiv.querySelector('.line.highlighted .fullxpath');
+
+    if (fullXPathSpan) {
+      const fullXPath = fullXPathSpan.textContent.trim();
+      const prefix = '<div class="selectxpathdiv"><span class="selectxpathspan">';
+      const suffix = '</span></div>';
+      
       // Initialize with the full XPath
       let formattedXPaths = [`${prefix}${fullXPath}${suffix}`];
       
@@ -945,8 +1017,8 @@ btn_copyxpathtofunction.disabled = false;
 	var functionLine;
     var targetField;
 	var amendedXPath;
-var amendedXPathFunction='Xpath';
-var amendedXPathCondition='Xpath';
+var amendedXPathFunction='&#11205; Xpath';
+var amendedXPathCondition='&#9724; Xpath';
 
 
 function copyxpathtoCondition(highlightedDiv){
@@ -1248,8 +1320,9 @@ function clearXMLInput() {
   list_fields.value='dc:identifier';
   validateXML();
   disableRecolour();
-  amendedXPathCondition='Xpath';
-  amendedXPathFunction='Xpath';
+   amendedXPathFunction='&#11205; Xpath';
+ amendedXPathCondition='&#9724; Xpath';
+  
 }
 
 function generateRandomXML3() {
