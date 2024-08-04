@@ -45,6 +45,22 @@ body {
   width: 100%;
 }
 
+
+
+.rule-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; 
+  width: 85%;
+}
+
+.control-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; 
+  width: 15%;
+}
+
 .line {
 
 }
@@ -84,7 +100,7 @@ body {
   
 	overflow: auto;
         width: 99%;
-      height: 441px;
+      height: 400px;
 	  border: 1px solid darkgrey; 
 	  
   }
@@ -104,7 +120,7 @@ body {
   #outputXPath {
   	overflow: auto;
         width: 100%;
-      height: 298px;
+      height: 258px;
     font: 16px Consolas;
     font-weight: bold;
 	border: 1px solid darkgrey; 
@@ -117,7 +133,7 @@ body {
   #outputRule{
   	overflow: auto;
         width: 100%;
-      height: 170px;
+      height: 225px;
     font: 16px Consolas; 
     font-weight: bold; 
 	border: 1px solid darkgrey; 
@@ -150,7 +166,7 @@ body {
   <div class="right-container">
   <p>
   <b>Instructions:</b><br>
-  1) XML record goes into the <b>[XML Input]</b> box on the left.<br>
+  1) XML record goes into the <b>[1]XML Record</b> box on the left.<br>
   2) Click the <b>[Format XML and Extract XPath]</b> button.<br>
   3) Select an element in <b>[Formatted XML]</b> to show the XPath.<br>
   4) Create an XML normalization rule using the <b>[XML Normalization Rule Builder]</b>.
@@ -198,20 +214,56 @@ Action</button> &nbsp;|&nbsp;&nbsp;<button id="btn_copyxpath" onclick="copyHighl
   </div>
 </div>
 <br>
-<div class="centre-container">
-   <div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>[5] XML Normalization Rule Builder</b></span><span style="float: right;">Condition: <select id="list_when" onchange="generateRuleFromHighlightedRow()" class='form-control'>
+
+<div class="container">
+
+<div class="rule-container">
+<div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%"><span style="float: left;"><b>[5] XML Normalization Rule Builder</b></span>&nbsp;&nbsp;|&nbsp;&nbsp;<span style="float: right;"><button id="btn_copyrule" onclick="copyOutputRule()" disabled>Copy to Clipboard</button></span></div>
+  <div id="outputRule" contenteditable="true" spellcheck="false"></div>
+
+ 
+ </div>
+  
+  
+  <div class="control-container">
+  	<div style="background-color: darkblue; color: white;border: 1px solid; border-color: darkgrey; width: 100%; height:100%">
+&emsp;<b>CONDITION:</b><br>
+&emsp;<select id="list_when" onchange="generateRuleFromHighlightedRow()" class='form-control'>
   <option>true</option>
 <option>exist</option>
 <option>equals</option>
 <option>starts with</option> 
 <option>contains (case)</option>
 <option>contains (non-case)</option>
- </select>&nbsp;&nbsp;&nbsp;Action: <select id="list_function" onchange="generateRuleFromHighlightedRow()" class='form-control'>
+ </select>
+ <br><br>
+ &emsp;<b>ACTION:</b><br>
+ &emsp;<select id="list_function" onchange="generateRuleFromHighlightedRow()" class='form-control'>
   <option>copy</option>
   <option>copy (starts with)</option>
 <option>set value</option>
 <option>set to TEMP</option>
-</select>&nbsp;&nbsp;&nbsp;Target: <select id="list_fields" onchange="generateRuleFromHighlightedRow()" class='form-control'>
+</select>
+<br><br>
+
+&emsp;<b>TRANSFORM:</b><br>
+&emsp;<select id="list_transform" onchange="generateRuleFromHighlightedRow()" class='form-control' disabled>
+  
+  <option>convert to lower case</option>  
+  <option>convert to upper case</option>
+  <option>convert to title case</option>
+  <option>convert to URL link</option>
+  <option>remove leading and trailing</option>
+<option>remove numbers</option>
+<option>remove brackets</option>
+</select><br>
+&emsp;<button id="btn_transformadd" onclick="addLine()" disabled>Add</button> <button id="btn_transformremove" onclick="removeLine()" disabled>Remove</button>
+
+<br><br>
+
+
+&emsp;<b>TARGET:</b><br>
+&emsp;<select id="list_fields" onchange="generateRuleFromHighlightedRow()" class='form-control'>
   <option disabled style="font-style:italic">--------</option> 
 <option disabled style="font-style:italic">Dublin Core</option>
 <option disabled style="font-style:italic"></option>
@@ -239,18 +291,166 @@ Action</button> &nbsp;|&nbsp;&nbsp;<button id="btn_copyxpath" onclick="copyHighl
 
 
 
-</select>&nbsp;&nbsp;|&nbsp;&nbsp;<button id="btn_copyrule" onclick="copyOutputRule()" disabled>Copy to Clipboard</button></span></div>
-  <div id="outputRule" contenteditable="true" spellcheck="false"></div>
+</select></div>
 
-
+	
+  </div>
 </div>
+
+
 <div id="outputXPath2"></div>
 
-
+</div>
 
 
 
 <script>
+
+//TEST
+// Initialize the array to hold the lines of text
+let transformLine = [];
+let transformText =`    <font color="gray"><i>##Insert transformation actions here</i></font>`;
+let transformCounter=0;
+// Variable to store the combined text
+
+
+// Function to add the string 'LineXYZ' to the array
+function addLine() {
+	var list_transform = document.getElementById('list_transform');
+	var selectedTransform = list_transform.value;
+    let newLine;
+	let lineNumber = transformLine.length + 1;
+	
+	if(selectedTransform==='remove leading and trailing'){
+		newLine =`<font color="gray"><i>    #TRANSFORM ${lineNumber}: Remove leading and trailing spaces.</i></font>
+    remove leading and trailing spaces (TEMP"1")<br>`
+	} else if(selectedTransform==='convert to URL link'){
+		newLine =`<font color="gray"><i>    #TRANSFORM ${lineNumber}: Convert into clickable URL link. Only works if value is URL address.</i></font> 
+    set TEMP"2" to xpath "<font color="red">${amendedXPathFunction}</font>"
+    add prefix (TEMP"1","&lt;a href=\\"")
+    add suffix (TEMP"1","\\" target=\\"_blank\\">")
+    concatenate with delimiter (TEMP"1",TEMP"2","")
+    add suffix (TEMP"1","&lt;/a>")	
+    `
+	} else	if(selectedTransform==='convert to lower case'){
+		newLine =`<font color="gray"><i>    #TRANSFORM ${lineNumber}: Change all to lower case.</i></font>    
+    lower case (TEMP"1")<br>`
+	} else if(selectedTransform==='remove numbers'){
+	
+	newLine =`<font color="gray"><i>    #TRANSFORM ${lineNumber}: Remove all numbers.</i></font>
+    remove string (TEMP"1","[0-9]")<br>`
+	}	else if(selectedTransform==='remove brackets'){
+	
+	newLine =`<font color="gray"><i>    #TRANSFORM ${lineNumber}: Remove bracket/parentheses and everything inside.</i></font>
+<font color="gray"><i>    #e.g. 'Jonathan (John) Smith' --> 'Jonathan Smith'</i></font>
+    remove substring using regex (TEMP"1","\\((.*?)\\)")<br>`
+	}	else if(selectedTransform==='convert to title case'){
+		
+	newLine =`<font color="gray"><i>    #TRANSFORM ${lineNumber}: Replace lower case letter with upper case at the beginnining of each word. Use 'lower case' rule beforehand for best results.</i></font>
+<font color="gray"><i>    #e.g. 'john doe' --> 'John Doe'</i></font>
+    replace string by string (TEMP"1","\\ba","A")
+    replace string by string (TEMP"1","\\bb","B")
+    replace string by string (TEMP"1","\\bc","C")
+    replace string by string (TEMP"1","\\bd","D")
+    replace string by string (TEMP"1","\\be","E")
+    replace string by string (TEMP"1","\\bf","F")
+    replace string by string (TEMP"1","\\bg","G")
+    replace string by string (TEMP"1","\\bh","H")
+    replace string by string (TEMP"1","\\bi","I")
+    replace string by string (TEMP"1","\\bj","J")
+    replace string by string (TEMP"1","\\bk","K")
+    replace string by string (TEMP"1","\\bl","L")
+    replace string by string (TEMP"1","\\bm","M")
+    replace string by string (TEMP"1","\\bn","N")
+    replace string by string (TEMP"1","\\bo","O")
+    replace string by string (TEMP"1","\\bp","P")
+    replace string by string (TEMP"1","\\bq","Q")
+    replace string by string (TEMP"1","\\br","R")
+    replace string by string (TEMP"1","\\bs","S")
+    replace string by string (TEMP"1","\\bt","T")
+    replace string by string (TEMP"1","\\bu","U")
+    replace string by string (TEMP"1","\\bv","V")
+    replace string by string (TEMP"1","\\bw","W")
+    replace string by string (TEMP"1","\\bx","X")
+    replace string by string (TEMP"1","\\by","Y")
+    replace string by string (TEMP"1","\\bz","Z")
+`
+	}else if(selectedTransform==='convert to upper case'){
+		
+	newLine =`<font color="gray"><i>    #TRANSFORM ${lineNumber}: Convert everything to upper case.</i></font>
+    replace string by string (TEMP"1","a","A")
+    replace string by string (TEMP"1","b","B")
+    replace string by string (TEMP"1","c","C")
+    replace string by string (TEMP"1","d","D")
+    replace string by string (TEMP"1","e","E")
+    replace string by string (TEMP"1","f","F")
+    replace string by string (TEMP"1","g","G")
+    replace string by string (TEMP"1","h","H")
+    replace string by string (TEMP"1","i","I")
+    replace string by string (TEMP"1","j","J")
+    replace string by string (TEMP"1","k","K")
+    replace string by string (TEMP"1","l","L")
+    replace string by string (TEMP"1","m","M")
+    replace string by string (TEMP"1","n","N")
+    replace string by string (TEMP"1","o","O")
+    replace string by string (TEMP"1","p","P")
+    replace string by string (TEMP"1","q","Q")
+    replace string by string (TEMP"1","r","R")
+    replace string by string (TEMP"1","s","S")
+    replace string by string (TEMP"1","t","T")
+    replace string by string (TEMP"1","u","U")
+    replace string by string (TEMP"1","v","V")
+    replace string by string (TEMP"1","w","W")
+    replace string by string (TEMP"1","x","X")
+    replace string by string (TEMP"1","y","Y")
+    replace string by string (TEMP"1","z","Z")
+`
+	}
+	transformCounter+=1;
+    transformLine.push(newLine);
+    updateFunctionLine();
+	
+	console.log(transformCounter);
+}
+
+// Function to remove the last line from the array
+function removeLine() {
+    transformLine.pop();
+	transformCounter-=1;
+	
+	if(transformCounter<0){
+	   transformCounter=0;
+   }
+    updateFunctionLine();
+	
+
+	
+	
+	console.log(transformCounter);
+}
+
+
+// Function to update the combined text in the functionLine variable
+function updateFunctionLine() {
+    // Define the static text
+ 
+    
+    // Join the array elements into a single string with line breaks
+    const dynamicContent = transformLine
+	//.map((line, index) => `${line} (position: ${index})`)
+	.join('<br>');
+    
+    // Combine the static and dynamic content
+    transformText = dynamicContent;
+  if(transformCounter===0){
+	   transformText=`    <font color="gray"><i>##Insert transformation actions here</i></font>`;
+   }
+    // Optionally, display it in the div for visual feedback (can be removed if not needed)
+    //document.getElementById('outputRule').innerHTML = functionLine;
+	generateRuleFromHighlightedRow();
+}
+
+
 
 //TEST
 
@@ -711,6 +911,7 @@ function performActions() {
     setTextContent('Select an element on the left or xpath from the top');
 enableRecolour();
   colorAttributeValues();
+  generateRuleFromHighlightedRow();
  //generateRule();
 }
 
@@ -1087,9 +1288,11 @@ function generateRuleFromHighlightedRow() {
     var list_fields = document.getElementById('list_fields');
 var list_when = document.getElementById('list_when');
 var list_function = document.getElementById('list_function');
+var list_transform = document.getElementById('list_transform');
     // Function to amend the XPath according to the rules
  
   var selectedField = list_fields.value;
+
 	var selectedWhen = list_when.value;
 	var selectedFunction = list_function.value;
 
@@ -1104,8 +1307,8 @@ var list_function = document.getElementById('list_function');
 	
 	var btn_copyxpathtocondition = document.getElementById('btn_copyxpathtocondition');
 var btn_copyxpathtofunction = document.getElementById('btn_copyxpathtofunction');
-
-
+var btn_transformadd = document.getElementById('btn_transformadd');
+var btn_transformremove = document.getElementById('btn_transformremove');
 	//asdfg
 	
 	if (amendedXPathFunction.includes("[@")) {
@@ -1195,7 +1398,7 @@ if (copycondition){
 
 }
 
-
+ 
 	
 	
 	//CONDITION	
@@ -1228,6 +1431,22 @@ if (copycondition){
 	}
 	
 	
+	//TRANSFORM BUTTON
+	
+	if (selectedFunction === 'set to TEMP') {
+		 
+		 list_transform.disabled = false;
+		 btn_transformadd.disabled = false
+		 if(transformCounter>0){
+			 btn_transformremove.disabled = false
+		 } else{btn_transformremove.disabled = true;}
+	 } else {
+		 list_transform.disabled = true;
+		 btn_transformadd.disabled = true;
+		 btn_transformremove.disabled = true;
+		 }
+	
+	
 	//ACTION
 	if (selectedFunction === 'copy'){
 		btn_copyxpathtofunction.disabled = false;
@@ -1250,7 +1469,7 @@ if (copycondition){
 		functionLine = `<font color="gray"><i>#ACTION: Assign xpath value into TEMP1${AttributeValueTextfunction}.</i></font> 
     set TEMP"1" to xpath "<font color="red">${amendedXPathFunction}</font>"
 	
-    <font color="gray"><i>##Insert transformation actions below this line</i></font>
+${transformText}
 	
 	
     <font color="gray"><i>#ACTION: Assign value from TEMP1 into ${selectedField}</i></font> 
