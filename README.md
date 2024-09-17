@@ -1,5 +1,5 @@
 # XEN tool - XPath Extraction and Normalization tool
-Live version: <a target="_blank" href="https://personalpages.manchester.ac.uk/staff/michael.wan/xen/">https://personalpages.manchester.ac.uk/staff/michael.wan/xen/</a>
+Live version: https://personalpages.manchester.ac.uk/staff/michael.wan/xen/
 
 # What is this?
 This is an online tool to help extract xpaths from an xml and form basic normalization rules for ExLibris PrimoVE
